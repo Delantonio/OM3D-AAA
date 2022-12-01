@@ -110,6 +110,33 @@ std::unique_ptr<Scene> create_default_scene() {
     return scene;
 }
 
+std::unique_ptr<Scene> create_forest_scene() {
+    auto scene = std::make_unique<Scene>();
+
+    // Load default cube model
+    auto result = Scene::from_gltf(std::string(data_path) + "forest.glb");
+    ALWAYS_ASSERT(result.is_ok, "Unable to load default scene");
+    scene = std::move(result.value);
+
+    // Add lights
+    {
+        PointLight light;
+        light.set_position(glm::vec3(1.0f, 2.0f, 4.0f));
+        light.set_color(glm::vec3(0.0f, 10.0f, 0.0f));
+        light.set_radius(100.0f);
+        scene->add_object(std::move(light));
+    }
+    {
+        PointLight light;
+        light.set_position(glm::vec3(1.0f, 2.0f, -4.0f));
+        light.set_color(glm::vec3(10.0f, 0.0f, 0.0f));
+        light.set_radius(50.0f);
+        scene->add_object(std::move(light));
+    }
+
+    return scene;
+}
+
 
 int main(int, char**) {
     DEBUG_ASSERT([] { std::cout << "Debug asserts enabled" << std::endl; return true; }());
@@ -131,8 +158,15 @@ int main(int, char**) {
 
     ImGuiRenderer imgui(window);
 
-    std::unique_ptr<Scene> scene = create_default_scene();
+    // std::unique_ptr<Scene> scene = create_default_scene();
+    // SceneView scene_view(scene.get());
+
+    std::unique_ptr<Scene> scene = create_forest_scene();
     SceneView scene_view(scene.get());
+    
+    // Set the camera for the forest scene
+    glm::mat4 view = glm::lookAt(glm::vec3(50.0f, 75.0f, 150.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    scene_view.camera().set_view(view);
 
     auto tonemap_program = Program::from_file("tonemap.comp");
 

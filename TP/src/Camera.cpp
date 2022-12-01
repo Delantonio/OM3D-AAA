@@ -104,4 +104,35 @@ Frustum Camera::build_frustum() const {
     return frustum;
 }
 
+bool Frustum::intersect(const glm::vec3 &center, float radius) const
+{
+   const float near_dist = glm::dot(center, _near_normal);
+    // if (near_dist + radius < 0)
+    if(near_dist < -radius) {
+         return false;
+    }
+
+    const float left_dist = glm::dot(center, _left_normal);
+    if(left_dist < -radius) {
+        return false;
+    }
+
+    const float right_dist = glm::dot(center, _right_normal);
+    if(right_dist < -radius) {
+        return false;
+    }
+
+    const float top_dist = glm::dot(center, _top_normal);
+    if(top_dist < -radius) {
+        return false;
+    }
+
+    const float bottom_dist = glm::dot(center, _bottom_normal);
+    if(bottom_dist < -radius) {
+        return false;
+    }
+
+    return true; 
+}
+
 }

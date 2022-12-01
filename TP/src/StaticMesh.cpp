@@ -1,12 +1,22 @@
 #include "StaticMesh.h"
 
 #include <glad/glad.h>
+#include <glm/glm.hpp>
 
 namespace OM3D {
 
 StaticMesh::StaticMesh(const MeshData& data) :
     _vertex_buffer(data.vertices),
     _index_buffer(data.indices) {
+        glm::vec3 sphere_center = glm::vec3(0.0f);
+        float sphere_radius = 0.0f;
+        for(const Vertex& vertex : data.vertices) {
+            float dist = glm::distance(vertex.position, sphere_center);
+            if(dist > sphere_radius) {
+                sphere_radius = dist;
+            }
+        }
+        bounding_sphere = {sphere_center, sphere_radius};
 }
 
 void StaticMesh::draw() const {

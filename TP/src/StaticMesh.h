@@ -1,6 +1,7 @@
 #ifndef STATICMESH_H
 #define STATICMESH_H
 
+#include <glm/ext/vector_float3.hpp>
 #include <graphics.h>
 #include <TypedBuffer.h>
 #include <Vertex.h>
@@ -14,6 +15,11 @@ struct MeshData {
     std::vector<u32> indices;
 };
 
+struct BoundingSphere {
+    glm::vec3 center;
+    float radius;
+};
+
 class StaticMesh : NonCopyable {
 
     public:
@@ -25,6 +31,7 @@ class StaticMesh : NonCopyable {
 
         void draw() const;
 
+        BoundingSphere bounding_sphere;
     private:
         TypedBuffer<Vertex> _vertex_buffer;
         TypedBuffer<u32> _index_buffer;

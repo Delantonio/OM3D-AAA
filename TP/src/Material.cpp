@@ -29,6 +29,10 @@ void Material::set_texture(u32 slot, std::shared_ptr<Texture> tex) {
     }
 }
 
+void Material::set_cull_mode(CullMode cull) {
+    _cull_mode = cull;
+}
+
 void Material::bind() const {
     switch(_blend_mode) {
         case BlendMode::None:
@@ -61,6 +65,27 @@ void Material::bind() const {
             glEnable(GL_DEPTH_TEST);
             // We are using reverse-Z
             glDepthFunc(GL_LEQUAL);
+        break;
+    }
+    
+    switch (_cull_mode) {
+    case CullMode::None:
+        glDisable(GL_CULL_FACE);
+        break;
+    case CullMode::Front:
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
+        glFrontFace(GL_CCW);
+        break;
+    case CullMode::Back:
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+        glFrontFace(GL_CCW);
+        break;
+    case CullMode::BackAndFront:
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT_AND_BACK);
+        glFrontFace(GL_CCW);
         break;
     }
 

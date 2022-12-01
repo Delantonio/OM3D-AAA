@@ -3,6 +3,7 @@
 #include <TypedBuffer.h>
 
 #include <shader_structs.h>
+#include "Camera.h"
 
 namespace OM3D {
 
@@ -45,9 +46,17 @@ void Scene::render(const Camera& camera) const {
     }
     light_buffer.bind(BufferUsage::Storage, 1);
 
+    Frustum frustum = camera.build_frustum();
+
     // Render every object
     for(const SceneObject& obj : _objects) {
-        obj.render();
+        obj.material()->set_cull_mode(CullMode::Back);
+        auto mesh = obj.mesh();
+        glm::vec4 center = obj.transform() * glm::vec4(mesh->bounding_sphere.center, 1.0f);
+        center -= glm::vec4(camera.position(), 0.0f);
+        if (frustum.intersect(glm::vec3(center.x, center.y, center.z), mesh->bounding_sphere.radius)) {
+            obj.render();
+        }
     }
 }
 
