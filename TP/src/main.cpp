@@ -1,4 +1,5 @@
 #include <glad/glad.h>
+#include "TypedBuffer.h"
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -176,6 +177,10 @@ int main(int, char**) {
     Framebuffer main_framebuffer(&depth, std::array{&lit});
     Framebuffer tonemap_framebuffer(nullptr, std::array{&color});
 
+    Texture gcolor(window_size, ImageFormat::RGBA8_UNORM);
+    Texture gnormal(window_size, ImageFormat::RGBA16_FLOAT);
+    Framebuffer gbuffer(&depth, std::array{&gcolor, &gnormal});
+
     for(;;) {
         glfwPollEvents();
         if(glfwWindowShouldClose(window) || glfwGetKey(window, GLFW_KEY_ESCAPE)) {
@@ -191,6 +196,12 @@ int main(int, char**) {
         // Render the scene
         {
             main_framebuffer.bind();
+            scene_view.render();
+            
+            // gbuffer
+            gbuffer.bind();
+            // use gubffer shader
+
             scene_view.render();
         }
 
