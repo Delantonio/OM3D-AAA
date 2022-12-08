@@ -19,11 +19,18 @@ class Scene : NonMovable {
 
         void render(const Camera& camera) const;
 
+        void add_object(SceneObject obj, size_t instance);
         void add_object(SceneObject obj);
         void add_object(PointLight obj);
+        
+        void show_instances();
 
     private:
         std::vector<SceneObject> _objects;
+        std::vector<SceneObject> _transparent_objects;
+
+        std::vector<std::vector<SceneObject>> _objects_by_instance;
+
         std::vector<PointLight> _point_lights;
         glm::vec3 _sun_direction = glm::vec3(0.2f, 1.0f, 0.1f);
 };

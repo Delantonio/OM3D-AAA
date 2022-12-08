@@ -33,7 +33,7 @@ class Material {
     public:
         Material();
 
-        Texture get_texture() const;
+        std::vector<std::pair<u32, std::shared_ptr<Texture>>> textures() const { return _textures; }
 
         void set_program(std::shared_ptr<Program> prog);
         void set_blend_mode(BlendMode blend);
@@ -48,6 +48,8 @@ class Material {
 
 
         void bind() const;
+        
+        bool operator==(const Material& other) const;
 
         static std::shared_ptr<Material> empty_material();
         static Material textured_material();

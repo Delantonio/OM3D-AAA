@@ -167,6 +167,13 @@ int main(int, char**) {
     // Set the camera for the forest scene
     glm::mat4 view = glm::lookAt(glm::vec3(50.0f, 75.0f, 150.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     scene_view.camera().set_view(view);
+    
+
+    // Split scene objects by material to draw them in batches with instancing
+    
+    scene->show_instances();
+    
+
 
     auto tonemap_program = Program::from_file("tonemap.comp");
 

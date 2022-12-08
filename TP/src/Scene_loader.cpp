@@ -1,5 +1,7 @@
+#include "Material.h"
 #include "Scene.h"
 #include "StaticMesh.h"
+#include "Texture.h"
 
 #include <glm/gtc/quaternion.hpp>
 
@@ -285,7 +287,6 @@ static void compute_tangents(MeshData& mesh) {
     }
 }
 
-
 Result<std::unique_ptr<Scene>> Scene::from_gltf(const std::string& file_name) {
     const double time = program_time();
     DEFER(std::cout << file_name << " loaded in " << std::round((program_time() - time) * 100.0) / 100.0 << "s" << std::endl);
@@ -321,6 +322,9 @@ Result<std::unique_ptr<Scene>> Scene::from_gltf(const std::string& file_name) {
     std::unordered_map<int, std::shared_ptr<Texture>> textures;
     std::unordered_map<int, std::shared_ptr<Material>> materials;
     std::unordered_map<int, glm::mat4> node_transforms;
+    
+    std::vector<std::vector<u32>> unique_materials;
+    bool first_material = true;
 
     {
         std::vector<int> node_indices;
@@ -365,7 +369,7 @@ Result<std::unique_ptr<Scene>> Scene::from_gltf(const std::string& file_name) {
             std::shared_ptr<Material> material;
             if(prim.material >= 0) {
                 auto& mat = materials[prim.material];
-
+                
                 if(!mat) {
                     const auto& albedo_info = gltf.materials[prim.material].pbrMetallicRoughness.baseColorTexture;
                     const auto& normal_info = gltf.materials[prim.material].normalTexture;
@@ -411,10 +415,40 @@ Result<std::unique_ptr<Scene>> Scene::from_gltf(const std::string& file_name) {
 
                 material = mat;
             }
-
+            
+            auto mat_size = material->textures().size();
+            std::vector<u32> mat;
+            for (size_t i = 0; i < mat_size; i++)
+                mat.push_back(material->textures()[i].second->handle());
+                
             auto scene_object = SceneObject(std::make_shared<StaticMesh>(mesh.value), std::move(material));
             scene_object.set_transform(node_transform);
             scene->add_object(std::move(scene_object));
+            
+            // Added modification for instancing
+
+            if (first_material)
+            {
+                unique_materials.push_back(mat);
+                first_material = false;
+            }
+                
+
+            for (size_t i = 0; i < unique_materials.size(); ++i)
+            {
+                const auto& curr_mat = unique_materials[i];
+                if (curr_mat == mat)
+                {
+                    scene->add_object(std::move(scene_object), i);
+                    break;
+                }
+                if (i == unique_materials.size() - 1)
+                {
+                    unique_materials.push_back(mat);
+                    scene->add_object(std::move(scene_object), i + 1);
+                    break;
+                }
+            }
         }
     }
 

@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <memory>
+#include <iostream>
 
 
 namespace OM3D {
@@ -26,6 +27,7 @@ class Texture {
         Texture() = default;
         Texture(Texture&&) = default;
         Texture& operator=(Texture&&) = default;
+        bool operator==(const Texture& other) const;
 
         ~Texture();
 
@@ -38,6 +40,11 @@ class Texture {
         const glm::uvec2& size() const;
 
         static u32 mip_levels(glm::uvec2 size);
+        
+        u32 handle() const
+        {
+            return _handle.get();
+        }
 
     private:
         friend class Framebuffer;

@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 
 #include <algorithm>
+#include <iostream>
 
 namespace OM3D {
 
@@ -31,6 +32,15 @@ void Material::set_texture(u32 slot, std::shared_ptr<Texture> tex) {
 
 void Material::set_cull_mode(CullMode cull) {
     _cull_mode = cull;
+}
+
+
+bool Material::operator==(const Material& other) const
+{
+    std::cout << "Material::operator== " << _textures[0].second << std::endl;
+    bool result = _textures[0].second == other._textures[0].second;
+    std::cout << "coucou"<< std::endl;
+    return result; 
 }
 
 void Material::bind() const {

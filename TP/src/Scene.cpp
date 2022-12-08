@@ -2,12 +2,22 @@
 
 #include <TypedBuffer.h>
 
+#include <algorithm>
+#include <iostream>
 #include <shader_structs.h>
 #include "Camera.h"
+#include "SceneObject.h"
 
 namespace OM3D {
 
 Scene::Scene() {
+}
+
+void Scene::add_object(SceneObject obj, size_t instance) {
+    if (instance >= _objects_by_instance.size()) {
+        _objects_by_instance.resize(instance + 1);
+    }
+    _objects_by_instance[instance].emplace_back(std::move(obj));
 }
 
 void Scene::add_object(SceneObject obj) {
@@ -16,6 +26,14 @@ void Scene::add_object(SceneObject obj) {
 
 void Scene::add_object(PointLight obj) {
     _point_lights.emplace_back(std::move(obj));
+}
+
+void Scene::show_instances() {
+    for (size_t i = 0; i < _objects_by_instance.size(); ++i)
+    {
+        auto &objects = _objects_by_instance[i];
+        std::cout << "Objects " << i << " has " << objects.size() << " instances" << std::endl;
+    }
 }
 
 void Scene::render(const Camera& camera) const {
@@ -47,7 +65,7 @@ void Scene::render(const Camera& camera) const {
     light_buffer.bind(BufferUsage::Storage, 1);
 
     Frustum frustum = camera.build_frustum();
-
+    
     // Render every object
     for(const SceneObject& obj : _objects) {
         obj.material()->set_cull_mode(CullMode::Back);

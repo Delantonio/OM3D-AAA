@@ -1,6 +1,7 @@
 #include "Texture.h"
 
 #include <glad/glad.h>
+#include <iostream>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
@@ -29,6 +30,13 @@ Result<TextureData> TextureData::from_file(const std::string& file) {
     std::copy_n(img, bytes, data.data.get());
 
     return {true, std::move(data)};
+}
+
+
+bool Texture::operator==(const Texture& other) const
+{
+    std::cout << "Texture::operator== " << std::endl;
+    return _handle.get() == other._handle.get(); 
 }
 
 
