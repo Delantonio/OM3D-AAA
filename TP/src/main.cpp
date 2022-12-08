@@ -180,6 +180,9 @@ int main(int, char**) {
     Texture gcolor(window_size, ImageFormat::RGBA8_UNORM);
     Texture gnormal(window_size, ImageFormat::RGBA16_FLOAT);
     Framebuffer gbuffer(&depth, std::array{&gcolor, &gnormal});
+    bool gui_albedo = false;
+    bool gui_normal = false;
+    bool gui_depth = false;
 
     for(;;) {
         glfwPollEvents();
@@ -200,8 +203,8 @@ int main(int, char**) {
             
             // gbuffer
             gbuffer.bind();
-            // use gubffer shader
 
+            // use gbuffer shader
             scene_view.render();
         }
 
@@ -228,6 +231,25 @@ int main(int, char**) {
                     scene = std::move(result.value);
                     scene_view = SceneView(scene.get());
                 }
+            }
+
+            if(ImGui::Checkbox("albedo", &gui_albedo))
+            {
+                gui_normal = false;
+                gui_depth = false;
+                //boolean = !boolean;
+            }
+            if(ImGui::Checkbox("normals", &gui_normal))
+            {
+                gui_albedo = false;
+                gui_depth = false;
+                //boolean = !boolean;
+            }
+            if(ImGui::Checkbox("depth", &gui_depth))
+            {
+                gui_albedo = false;
+                gui_normal = false;
+                //boolean = !boolean;
             }
         }
         imgui.finish();

@@ -16,7 +16,7 @@ void SceneObject::render() const {
 
    _material->set_uniform(HASH("model"), transform());
    _material->bind();
-    _mesh->draw();
+   _mesh->draw();
 }
 
 void SceneObject::set_transform(const glm::mat4& tr) {
