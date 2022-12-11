@@ -1,4 +1,5 @@
 #include <glad/glad.h>
+#include "TypedBuffer.h"
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -182,6 +183,8 @@ int main(int, char**) {
     Texture color(window_size, ImageFormat::RGBA8_UNORM);
     Framebuffer main_framebuffer(&depth, std::array{&lit});
     Framebuffer tonemap_framebuffer(nullptr, std::array{&color});
+    
+    TypedBuffer<glm::mat4> transform_instance_buffer;
 
     for(;;) {
         glfwPollEvents();

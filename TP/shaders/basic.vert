@@ -19,9 +19,15 @@ layout(binding = 0) uniform Data {
     FrameData frame;
 };
 
-uniform mat4 model;
+layout(binding = 2) buffer Models {
+    InstancedModel models[];
+};
+
+// uniform mat4 model;
 
 void main() {
+    mat4 model = models[gl_InstanceID].transform;
+
     const vec4 position = model * vec4(in_pos, 1.0);
 
     out_normal = normalize(mat3(model) * in_normal);

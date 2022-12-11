@@ -30,6 +30,12 @@ class StaticMesh : NonCopyable {
         StaticMesh(const MeshData& data);
 
         void draw() const;
+        void draw_instanced(int count) const;
+        
+        int get_indices_count() const
+        {
+            return _index_buffer.element_count();
+        }
 
         BoundingSphere bounding_sphere;
     private:
