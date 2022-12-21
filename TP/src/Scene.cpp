@@ -4,6 +4,7 @@
 
 #include <shader_structs.h>
 #include "Camera.h"
+#include "Material.h"
 
 namespace OM3D {
 
@@ -51,6 +52,7 @@ void Scene::render(const Camera& camera) const {
     // Render every object
     for(const SceneObject& obj : _objects) {
         obj.material()->set_cull_mode(CullMode::Back);
+        obj.material()->set_depth_test_mode(DepthTestMode::Standard);
         auto mesh = obj.mesh();
         glm::vec4 center = obj.transform() * glm::vec4(mesh->bounding_sphere.center, 1.0f);
         center -= glm::vec4(camera.position(), 0.0f);

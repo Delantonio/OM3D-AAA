@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <glad/glad.h>
 #include "TypedBuffer.h"
 
@@ -170,16 +171,21 @@ int main(int, char**) {
     scene_view.camera().set_view(view);
 
     auto tonemap_program = Program::from_file("tonemap.comp");
+    
+    auto debug_program = Program::from_files("debug.frag", "screen.vert");
 
     Texture depth(window_size, ImageFormat::Depth32_FLOAT);
-    Texture lit(window_size, ImageFormat::RGBA16_FLOAT);
-    Texture color(window_size, ImageFormat::RGBA8_UNORM);
-    Framebuffer main_framebuffer(&depth, std::array{&lit});
-    Framebuffer tonemap_framebuffer(nullptr, std::array{&color});
+    // Texture lit(window_size, ImageFormat::RGBA16_FLOAT);
+    // Texture color(window_size, ImageFormat::RGBA8_UNORM);
+    // Framebuffer main_framebuffer(&depth, std::array{&lit});
+    // Framebuffer tonemap_framebuffer(nullptr, std::array{&color});
 
     Texture gcolor(window_size, ImageFormat::RGBA8_UNORM);
     Texture gnormal(window_size, ImageFormat::RGBA16_FLOAT);
+    Texture glit(window_size, ImageFormat::RGBA16_FLOAT);
     Framebuffer gbuffer(&depth, std::array{&gcolor, &gnormal});
+    Framebuffer renderbuffer(nullptr, std::array{&glit});
+    // Framebuffer tonemap_framebuffer(nullptr, std::array{&gcolor});
     bool gui_albedo = false;
     bool gui_normal = false;
     bool gui_depth = false;
@@ -198,26 +204,51 @@ int main(int, char**) {
 
         // Render the scene
         {
-            main_framebuffer.bind();
-            scene_view.render();
+            // main_framebuffer.bind();
+            // scene_view.render();
             
             // gbuffer
             gbuffer.bind();
 
             // use gbuffer shader
             scene_view.render();
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        }
+        
+        if(gui_albedo)
+        {
+            debug_program->bind();
+            glDisable(GL_CULL_FACE);
+            gcolor.bind(0);
+            glDrawArrays(GL_TRIANGLES, 0, 3);
+        }
+        else if(gui_normal)
+        {
+            debug_program->bind();
+            glDisable(GL_CULL_FACE);
+            gnormal.bind(0);
+            glDrawArrays(GL_TRIANGLES, 0, 3);
+        }
+        else if(gui_depth)
+        {
+            debug_program->bind();
+            glDisable(GL_CULL_FACE);
+            depth.bind(0);
+            glDrawArrays(GL_TRIANGLES, 0, 3);
         }
 
         // Apply a tonemap in compute shader
         {
-            tonemap_program->bind();
-            lit.bind(0);
-            color.bind_as_image(1, AccessType::WriteOnly);
-            glDispatchCompute(align_up_to(window_size.x, 8), align_up_to(window_size.y, 8), 1);
+            // tonemap_program->bind();
+            // lit.bind(0);
+            // color.bind_as_image(1, AccessType::WriteOnly);
+            
+            // glDispatchCompute(align_up_to(window_size.x, 8), align_up_to(window_size.y, 8), 1);
         }
         // Blit tonemap result to screen
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        tonemap_framebuffer.blit();
+        // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        // tonemap_framebuffer.blit();
+
 
         // GUI
         imgui.start();
