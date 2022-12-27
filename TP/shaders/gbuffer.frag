@@ -16,13 +16,13 @@ layout(location = 1) out vec3 g_normal;
 layout(binding = 0) uniform sampler2D in_texture;
 layout(binding = 1) uniform sampler2D in_normal_texture;
 
-layout(binding = 0) uniform Data {
-    FrameData frame;
-};
+// layout(binding = 0) uniform Data {
+//     FrameData frame;
+// };
 
-layout(binding = 1) buffer PointLights {
-    PointLight point_lights[];
-};
+// layout(binding = 1) buffer PointLights {
+//     PointLight point_lights[];
+// };
 
 void main()
 {

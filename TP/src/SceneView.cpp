@@ -19,4 +19,10 @@ void SceneView::render() const {
     }
 }
 
+void SceneView::render_triangle() const {
+    if(_scene) {
+        _scene->render_triangle(_camera);
+    }
+}
+
 }

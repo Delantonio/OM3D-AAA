@@ -220,21 +220,26 @@ int main(int, char**) {
             debug_program->bind();
             glDisable(GL_CULL_FACE);
             gcolor.bind(0);
-            glDrawArrays(GL_TRIANGLES, 0, 3);
+            gnormal.bind(1);
+            depth.bind(2);
+            scene_view.render_triangle();
+            //glDrawArrays(GL_TRIANGLES, 0, 3);
         }
         else if(gui_normal)
         {
             debug_program->bind();
             glDisable(GL_CULL_FACE);
             gnormal.bind(0);
-            glDrawArrays(GL_TRIANGLES, 0, 3);
+            scene_view.render_triangle();
+            // glDrawArrays(GL_TRIANGLES, 0, 3);
         }
         else if(gui_depth)
         {
             debug_program->bind();
             glDisable(GL_CULL_FACE);
             depth.bind(0);
-            glDrawArrays(GL_TRIANGLES, 0, 3);
+            scene_view.render_triangle();
+            // glDrawArrays(GL_TRIANGLES, 0, 3);
         }
 
         // Apply a tonemap in compute shader
