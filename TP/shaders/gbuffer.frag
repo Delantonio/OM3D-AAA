@@ -35,7 +35,8 @@ void main()
     const vec3 normal = in_normal;
 #endif
 
-    g_normal = normal;
+    // change interval from [-1, 1] to [0, 1]
+    g_normal = (normal + 1.0) / 2.0;
     g_color = in_color;
     
 #ifdef TEXTURED
