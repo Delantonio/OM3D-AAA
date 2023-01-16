@@ -173,6 +173,7 @@ int main(int, char**) {
     auto tonemap_program = Program::from_file("tonemap.comp");
     
     auto debug_program = Program::from_files("debug.frag", "screen.vert");
+    auto render_program = Program::from_files("render.frag", "screen.vert");
 
     Texture depth(window_size, ImageFormat::Depth32_FLOAT);
     // Texture lit(window_size, ImageFormat::RGBA16_FLOAT);
@@ -182,9 +183,9 @@ int main(int, char**) {
 
     Texture gcolor(window_size, ImageFormat::RGBA8_sRGB);
     Texture gnormal(window_size, ImageFormat::RGBA8_UNORM);
-    Texture glit(window_size, ImageFormat::RGBA16_FLOAT);
+    // Texture glit(window_size, ImageFormat::RGBA16_FLOAT);
     Framebuffer gbuffer(&depth, std::array{&gcolor, &gnormal});
-    Framebuffer renderbuffer(nullptr, std::array{&glit});
+    // Framebuffer renderbuffer(nullptr, std::array{&glit});
     // Framebuffer tonemap_framebuffer(nullptr, std::array{&gcolor});
     bool gui_albedo = false;
     bool gui_normal = false;
@@ -207,11 +208,13 @@ int main(int, char**) {
             // main_framebuffer.bind();
             // scene_view.render();
             
-            // gbuffer
+            // bind gbuffer
             gbuffer.bind();
 
             // use gbuffer shader
             scene_view.render();
+            
+            // unbind gbuffer
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
         
@@ -219,27 +222,33 @@ int main(int, char**) {
         {
             debug_program->bind();
             glDisable(GL_CULL_FACE);
+            debug_program->set_uniform("depth", (unsigned int)false);
             gcolor.bind(0);
-            gnormal.bind(1);
-            depth.bind(2);
             scene_view.render_triangle();
-            //glDrawArrays(GL_TRIANGLES, 0, 3);
         }
         else if(gui_normal)
         {
             debug_program->bind();
             glDisable(GL_CULL_FACE);
+            debug_program->set_uniform("depth", (unsigned int)false);
             gnormal.bind(0);
             scene_view.render_triangle();
-            // glDrawArrays(GL_TRIANGLES, 0, 3);
         }
         else if(gui_depth)
         {
             debug_program->bind();
             glDisable(GL_CULL_FACE);
+            debug_program->set_uniform("depth", (unsigned int)true);
             depth.bind(0);
             scene_view.render_triangle();
-            // glDrawArrays(GL_TRIANGLES, 0, 3);
+        }
+        else {
+            render_program->bind();
+            glDisable(GL_CULL_FACE);
+            gcolor.bind(0);
+            gnormal.bind(1);
+            depth.bind(2);
+            scene_view.render_triangle();
         }
 
         // Apply a tonemap in compute shader
