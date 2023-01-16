@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 
 #include <algorithm>
+#include "utils.h"
 
 namespace OM3D {
 
@@ -47,6 +48,7 @@ void Material::bind() const {
         case BlendMode::Additive:
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+            glDepthMask(GL_FALSE);
         break;
     }
 
@@ -102,6 +104,19 @@ void Material::bind() const {
         texture.second->bind(texture.first);
     }
     _program->bind();
+}
+
+
+Material Material::empty_material(std::shared_ptr<Program> program, std::vector<std::shared_ptr<Texture>> textures)
+{
+    Material material;
+    material.set_program(program);
+    for (u32 i = 0; i < textures.size(); ++i)
+    {
+        material.set_texture(i, textures[i]);
+        // textures[i]->print_handle();
+    }
+    return material;
 }
 
 std::shared_ptr<Material> Material::empty_material() {

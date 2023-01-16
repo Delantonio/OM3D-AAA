@@ -51,6 +51,8 @@ class Material {
         void bind() const;
 
         static std::shared_ptr<Material> empty_material();
+        // static std::shared_ptr<Material> empty_material(std::shared_ptr<Program> program, std::vector<std::shared_ptr<Texture>> textures);
+        static Material empty_material(std::shared_ptr<Program> program, std::vector<std::shared_ptr<Texture>> textures);
         static Material textured_material();
         static Material textured_normal_mapped_material();
 

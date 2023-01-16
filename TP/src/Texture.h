@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <memory>
+#include <iostream>
 
 
 namespace OM3D {
@@ -38,6 +39,11 @@ class Texture {
         const glm::uvec2& size() const;
 
         static u32 mip_levels(glm::uvec2 size);
+        
+        void print_handle() const
+        {
+            std::cout << "Texture handle: " << _handle.get() << std::endl;
+        }
 
     private:
         friend class Framebuffer;
