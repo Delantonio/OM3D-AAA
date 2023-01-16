@@ -180,8 +180,8 @@ int main(int, char**) {
     // Framebuffer main_framebuffer(&depth, std::array{&lit});
     // Framebuffer tonemap_framebuffer(nullptr, std::array{&color});
 
-    Texture gcolor(window_size, ImageFormat::RGBA8_UNORM);
-    Texture gnormal(window_size, ImageFormat::RGBA16_FLOAT);
+    Texture gcolor(window_size, ImageFormat::RGBA8_sRGB);
+    Texture gnormal(window_size, ImageFormat::RGBA8_UNORM);
     Texture glit(window_size, ImageFormat::RGBA16_FLOAT);
     Framebuffer gbuffer(&depth, std::array{&gcolor, &gnormal});
     Framebuffer renderbuffer(nullptr, std::array{&glit});

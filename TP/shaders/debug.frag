@@ -33,33 +33,33 @@ void main()
 
     vec3 position = unproject(in_uv, depth, inverse(frame.camera.view_proj));
 
-    //vec3 acc = frame.sun_color * max(0.0, dot(frame.sun_dir, normal)) + ambient;
+    vec3 acc = frame.sun_color * max(0.0, dot(frame.sun_dir, normal)) + ambient;
     
-    vec3 acc = ambient;
+    // vec3 acc = ambient;
 
-    int number = 0;
+    // int number = 0;
 
-    for(uint i = 0; i != frame.point_light_count; ++i) {
-        PointLight light = point_lights[i];
-        const vec3 to_light = (light.position - position);
-        const float dist = length(to_light);
-        const vec3 light_vec = to_light / dist;
+    // for(uint i = 0; i != frame.point_light_count; ++i) {
+    //     PointLight light = point_lights[i];
+    //     const vec3 to_light = (light.position - position);
+    //     const float dist = length(to_light);
+    //     const vec3 light_vec = to_light / dist;
 
-        const float NoL = dot(light_vec, normal);
-        const float att = attenuation(dist, light.radius);
-        if(NoL <= 0.0) {
-            continue;
-        }
-        if (att <= 0.0f) {
-            continue;
-        }
+    //     const float NoL = dot(light_vec, normal);
+    //     const float att = attenuation(dist, light.radius);
+    //     if(NoL <= 0.0) {
+    //         continue;
+    //     }
+    //     if (att <= 0.0f) {
+    //         continue;
+    //     }
 
-        acc += light.color * (NoL * att);
-        number += 1;
-    }
+    //     acc += light.color * (NoL * att);
+    //     number += 1;
+    // }
 
     vec4 color = texelFetch(in_texture, ivec2(gl_FragCoord.xy), 0);
-    float toto = number / 255 * 10;
-    out_color = vec4(number, number, number, 1.0);
-    //out_color = vec4(color.rgb * acc, 1.0);
+    // float toto = number / 255 * 10;
+    //out_color = vec4(number, number, number, 1.0);
+    out_color = vec4(color.rgb * acc, 1.0);
 }
