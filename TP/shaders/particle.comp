@@ -1,0 +1,28 @@
+#version 450
+
+#include "utils.glsl"
+
+layout(local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
+
+layout(binding = 0) uniform Data {
+    FrameData frame;
+};
+
+layout(binding = 1) buffer ParticleSSBO {
+    Particle particles[];
+};
+
+uniform float dt = 0.01f;
+
+void main()
+{
+    uint index = gl_GlobalInvocationID.x;
+    // frame.numParticles = 100;
+    // if (index >= frame.numParticles) {
+    //     return;
+    // }
+    mat4 model_transform = particles[index].transform;
+    // model_transform = translate(model_transform, vec3(0, 1, 0) * dt);
+
+    // model_transform = translate(model_transform, particles[index].velocity * dt);
+}

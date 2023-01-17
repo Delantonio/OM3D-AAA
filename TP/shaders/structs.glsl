@@ -9,7 +9,7 @@ struct FrameData {
     uint point_light_count;
 
     vec3 sun_color;
-    float padding_1;
+    float numParticles;
 };
 
 struct PointLight {
@@ -20,14 +20,23 @@ struct PointLight {
 };
 
 struct Particle {
-    vec3 position;
-    float radius;
+    mat4 transform;
+    vec4 color;
     vec3 velocity;
     float age;
     vec3 force;
     float lifetime;
-    vec4 color;
 };
+
+// struct Particle {
+//     vec3 position;
+//     float radius;
+//     vec3 velocity;
+//     float age;
+//     vec3 force;
+//     float lifetime;
+//     vec4 color;
+// };
 
 struct ParticleVertex {
     vec3 position;

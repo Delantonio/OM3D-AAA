@@ -1,14 +1,21 @@
 #include <glm/ext/vector_float3.hpp>
 #include <glm/ext/vector_float4.hpp>
+#include "glm/ext/matrix_float4x4.hpp"
 
 class Particle
 {
     public:
-        Particle(glm::vec3 position, glm::vec3 velocity, glm::vec4 color, float radius, float age, float lifetime)
-            : _position(position), _velocity(velocity), _color(color), _radius(radius), _age(age), _lifetime(lifetime)
+        // Particle(glm::vec3 position, glm::vec3 velocity, glm::vec4 color, float radius, float age, float lifetime)
+        //     : _position(position), _velocity(velocity), _color(color), _radius(radius), _age(age), _lifetime(lifetime)
+        // {}
+        Particle() = default;
+
+        Particle(glm::mat4 transform, glm::vec3 velocity, glm::vec4 color, float radius, float age, float lifetime)
+            : _transform(transform), _velocity(velocity), _color(color), _radius(radius), _age(age), _lifetime(lifetime)
         {}
 
-        glm::vec3 _position;
+        glm::mat4 _transform;
+        // glm::vec3 _position;
         glm::vec3 _velocity;
         glm::vec3 _force;
         glm::vec4 _color;

@@ -3,6 +3,8 @@
 #include <memory>
 #include "SceneObject.h"
 #include "TypedBuffer.h"
+#include "ParticleSystem.h"
+#include "glm/ext/matrix_transform.hpp"
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -18,6 +20,7 @@
 #include <Material.h>
 
 #include <imgui/imgui.h>
+
 
 
 using namespace OM3D;
@@ -184,8 +187,8 @@ int main(int, char**) {
     SceneView scene_view(scene.get());
     
     // Set the camera for the forest scene
-    glm::mat4 view = glm::lookAt(glm::vec3(50.0f, 75.0f, 150.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    scene_view.camera().set_view(view);
+    // glm::mat4 view = glm::lookAt(glm::vec3(50.0f, 75.0f, 150.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    // scene_view.camera().set_view(view);
 
     auto tonemap_program = Program::from_file("tonemap.comp");
     
@@ -232,6 +235,33 @@ int main(int, char**) {
     
     render_material->set_cull_mode(CullMode::None);
     // render_material.set_blend_mode(BlendMode::Additive);
+    
+    std::vector<Particle> particles;
+    for (size_t i = 0;  i < 100; i++)
+    {
+        Particle p;
+        p._transform = glm::translate(p._transform, glm::vec3(2.0f * i, 0.0f, 0.0f));
+        p._velocity = glm::vec3(0.0f, 1.0f, 0.0f);
+        // float c = 1.01f * i;
+        // p._color = glm::vec4(c, c, c, 1.0f);
+        p._color = glm::vec4(255.0f, 0.0f, 0.0f, 1.0f);
+        // p._force = glm::vec3(0.0f, -9.81f, 0.0f);
+        p._force = glm::vec3(0.0f, 0.0f, 0.0f);
+        p._lifetime = 1.0f;
+        p._age = 0.0f;
+        p._radius = 0.1f;
+        particles.push_back(p);
+    }
+    
+    Texture particles_texture(window_size, ImageFormat::RGBA16_FLOAT);
+    Framebuffer particles_framebuffer(nullptr, std::array{&particles_texture});
+    
+    auto particles_render_program = Program::from_files("particle.frag", "particle.vert");
+    auto particles_compute_program = Program::from_file("particle.comp");
+    auto particles_material_raw = OM3D::Material::empty_material(particles_render_program, {});
+    auto particles_material = std::make_shared<Material>(particles_material_raw);
+    
+    ParticleSystem particle_system(particles_compute_program, particles_material, particles); 
 
     for(;;) {
         glfwPollEvents();
@@ -245,67 +275,83 @@ int main(int, char**) {
             process_inputs(window, scene_view.camera());
         }
 
-        // Render the scene
-        {
-            // main_framebuffer.bind();
-            // scene_view.render();
-            
-            // bind gbuffer
-            gbuffer.bind(true);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClearColor(0.5f, 0.7f, 0.8f, 0.0f);
 
-            // use gbuffer shader
-            scene_view.render();
+        // test particle system
+        particles_framebuffer.bind();
+        particle_system.update(delta_time);
+        tonemap_program->bind();
+        particles_texture.bind(0);
+        color.bind_as_image(1, AccessType::WriteOnly);
+
+        glDispatchCompute(align_up_to(window_size.x, 8),
+                          align_up_to(window_size.y, 8), 1);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        tonemap_framebuffer.blit();
+
+        // // Render the scene
+        // {
+        //     // main_framebuffer.bind();
+        //     // scene_view.render();
             
-            // unbind gbuffer
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        }
+        //     // bind gbuffer
+        //     gbuffer.bind(true);
+
+        //     // use gbuffer shader
+        //     scene_view.render();
+            
+        //     // unbind gbuffer
+        //     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        // }
         
         
-        if(gui_albedo)
-        {
-            renderbuffer.bind();
-            debug_color.bind();
-            debug_program->set_uniform("depth", (unsigned int)false);
-            scene_view.render_triangle();
+        // if(gui_albedo)
+        // {
+        //     renderbuffer.bind();
+        //     debug_color.bind();
+        //     debug_program->set_uniform("depth", (unsigned int)false);
+        //     scene_view.render_triangle();
 
-            tonemap_program->bind();
-            glit.bind(0);
-            color.bind_as_image(1, AccessType::WriteOnly);
+        //     tonemap_program->bind();
+        //     glit.bind(0);
+        //     color.bind_as_image(1, AccessType::WriteOnly);
             
-            glDispatchCompute(align_up_to(window_size.x, 8), align_up_to(window_size.y, 8), 1);
+        //     glDispatchCompute(align_up_to(window_size.x, 8), align_up_to(window_size.y, 8), 1);
 
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            tonemap_framebuffer.blit();
-        }
-        else if(gui_normal)
-        {
-            debug_normal.bind();
-            debug_program->set_uniform("depth", (unsigned int)false);
-            scene_view.render_triangle();
-        }
-        else if(gui_depth)
-        {
-            debug_depth.bind();
-            debug_program->set_uniform("depth", (unsigned int)true);
-            scene_view.render_triangle();
-        }
-        else {
-            renderbuffer.bind();
-            render_material->bind();
-            scene_view.render_triangle(*sphere.get());
-            // scene_view.render_triangle();
+        //     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        //     tonemap_framebuffer.blit();
+        // }
+        // else if(gui_normal)
+        // {
+        //     debug_normal.bind();
+        //     debug_program->set_uniform("depth", (unsigned int)false);
+        //     scene_view.render_triangle();
+        // }
+        // else if(gui_depth)
+        // {
+        //     debug_depth.bind();
+        //     debug_program->set_uniform("depth", (unsigned int)true);
+        //     scene_view.render_triangle();
+        // }
+        // else {
+        //     renderbuffer.bind();
+        //     render_material->bind();
+        //     scene_view.render_triangle(*sphere.get());
+        //     // scene_view.render_triangle();
 
-            // Apply a tonemap in compute shader
-            tonemap_program->bind();
-            glit.bind(0);
-            color.bind_as_image(1, AccessType::WriteOnly);
+        //     // Apply a tonemap in compute shader
+        //     tonemap_program->bind();
+        //     glit.bind(0);
+        //     color.bind_as_image(1, AccessType::WriteOnly);
             
-            glDispatchCompute(align_up_to(window_size.x, 8), align_up_to(window_size.y, 8), 1);
+        //     glDispatchCompute(align_up_to(window_size.x, 8), align_up_to(window_size.y, 8), 1);
 
-            // Blit tonemap result to screen
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            tonemap_framebuffer.blit();
-        }
+        //     // Blit tonemap result to screen
+        //     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        //     tonemap_framebuffer.blit();
+        // }
 
 
         // GUI
