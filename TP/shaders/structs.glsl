@@ -19,3 +19,19 @@ struct PointLight {
     float padding_1;
 };
 
+struct Particle {
+    vec3 position;
+    float radius;
+    vec3 velocity;
+    float age;
+    vec3 force;
+    float lifetime;
+    vec4 color;
+};
+
+struct ParticleVertex {
+    vec3 position;
+    vec4 color;
+    vec2 uv;
+};
+
