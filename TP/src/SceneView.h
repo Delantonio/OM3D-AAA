@@ -3,6 +3,7 @@
 
 #include <Scene.h>
 #include <Camera.h>
+#include "SceneObject.h"
 
 namespace OM3D {
 
@@ -15,6 +16,8 @@ class SceneView {
 
         void render() const;
         void render_triangle() const;
+        // void render_triangle(std::shared_ptr<SceneObject> light_sphere) const;
+        void render_triangle(SceneObject &light_sphere) const;
 
     private:
         const Scene* _scene = nullptr;

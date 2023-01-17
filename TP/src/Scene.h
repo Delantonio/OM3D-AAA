@@ -19,9 +19,21 @@ class Scene : NonMovable {
 
         void render(const Camera& camera) const;
         void render_triangle(const Camera &camera) const;
+        // void render_triangle(const Camera &camera, std::shared_ptr<SceneObject> light_sphere) const;
+        void render_triangle(const Camera &camera, SceneObject &light_sphere) const;
 
         void add_object(SceneObject obj);
         void add_object(PointLight obj);
+        
+        const std::vector<SceneObject>& objects() const
+        {
+            return _objects;
+        }
+        
+        SceneObject get_first_object()
+        {
+            return std::move(_objects[0]);
+        }
 
     private:
         std::vector<SceneObject> _objects;

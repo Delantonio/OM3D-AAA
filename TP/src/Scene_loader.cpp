@@ -399,6 +399,7 @@ Result<std::unique_ptr<Scene>> Scene::from_gltf(const std::string& file_name) {
 
                     if(!albedo) {
                         mat = Material::empty_material();
+                        std::cout << "Empty material" << std::endl;
                     } else if(!normal) {
                         mat = std::make_shared<Material>(Material::textured_material());
                         mat->set_texture(0u, albedo);

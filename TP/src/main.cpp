@@ -1,6 +1,7 @@
 #include <cstddef>
 #include <glad/glad.h>
 #include <memory>
+#include "SceneObject.h"
 #include "TypedBuffer.h"
 
 #define GLFW_INCLUDE_NONE
@@ -114,10 +115,23 @@ std::unique_ptr<Scene> create_default_scene() {
     return scene;
 }
 
+std::shared_ptr<StaticMesh> create_light_sphere() {
+    auto scene = std::make_unique<Scene>();
+
+    auto result = Scene::from_gltf(std::string(data_path) + "sphere.glb");
+    ALWAYS_ASSERT(result.is_ok, "Unable to load default scene");
+    scene = std::move(result.value);
+
+    auto sphere = scene->get_first_object();
+    // sphere = std::move(sphere);
+    std::cout << sphere.mesh()->bounding_sphere.radius << std::endl;
+
+    return sphere.mesh();
+}
+
 std::unique_ptr<Scene> create_forest_scene() {
     auto scene = std::make_unique<Scene>();
 
-    // Load default cube model
     auto result = Scene::from_gltf(std::string(data_path) + "forest.glb");
     ALWAYS_ASSERT(result.is_ok, "Unable to load default scene");
     scene = std::move(result.value);
@@ -126,17 +140,17 @@ std::unique_ptr<Scene> create_forest_scene() {
     {
         PointLight light;
         light.set_position(glm::vec3(1.0f, 2.0f, 4.0f));
-        light.set_color(glm::vec3(0.0f, 10.0f, 0.0f));
-        light.set_radius(100.0f);
+        light.set_color(glm::vec3(0.0f, 255.0f, 0.0f));
+        light.set_radius(1000.0f);
         scene->add_object(std::move(light));
     }
-    // {
-    //     PointLight light;
-    //     light.set_position(glm::vec3(1.0f, 2.0f, -4.0f));
-    //     light.set_color(glm::vec3(10.0f, 0.0f, 0.0f));
-    //     light.set_radius(50.0f);
-    //     scene->add_object(std::move(light));
-    // }
+    {
+        PointLight light;
+        light.set_position(glm::vec3(10.0f, 2.0f, -4.0f));
+        light.set_color(glm::vec3(255.0f, 0.0f, 0.0f));
+        light.set_radius(500.0f);
+        scene->add_object(std::move(light));
+    }
 
     return scene;
 }
@@ -164,6 +178,7 @@ int main(int, char**) {
 
     // std::unique_ptr<Scene> scene = create_default_scene();
     // SceneView scene_view(scene.get());
+    
 
     std::unique_ptr<Scene> scene = create_forest_scene();
     SceneView scene_view(scene.get());
@@ -176,6 +191,10 @@ int main(int, char**) {
     
     auto debug_program = Program::from_files("debug.frag", "screen.vert");
     auto render_program = Program::from_files("render.frag", "screen.vert");
+
+    // auto sphere_mesh = create_light_sphere();
+    // auto sphere_material = std::make_shared<Material>(Material::empty_material(render_program, {}));
+    // auto sphere = std::make_shared<SceneObject>(sphere_mesh, sphere_material);
 
     // Texture depth(window_size, ImageFormat::Depth32_FLOAT);
     // Texture lit(window_size, ImageFormat::RGBA16_FLOAT);
@@ -238,6 +257,7 @@ int main(int, char**) {
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
         
+        
         if(gui_albedo)
         {
             renderbuffer.bind();
@@ -269,6 +289,7 @@ int main(int, char**) {
         else {
             renderbuffer.bind();
             render_material.bind();
+            // scene_view.render_triangle(*sphere.get());
             scene_view.render_triangle();
 
             tonemap_program->bind();
