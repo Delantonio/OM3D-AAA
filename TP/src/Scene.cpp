@@ -145,7 +145,7 @@ void Scene::render_triangle(const Camera &camera, SceneObject &light_sphere) con
         transform = glm::scale(transform, glm::vec3(light.radius()));
         light_sphere.set_transform(transform);
 
-        light_sphere.material()->set_cull_mode(CullMode::Back);
+        light_sphere.material()->set_cull_mode(CullMode::None);
         light_sphere.material()->set_depth_test_mode(DepthTestMode::None);
         light_sphere.material()->set_blend_mode(BlendMode::Additive);
 
@@ -157,6 +157,7 @@ void Scene::render_triangle(const Camera &camera, SceneObject &light_sphere) con
             light_sphere.render();
         }
     }
+    light_sphere.material()->set_blend_mode(BlendMode::None);
 
     glDrawArrays(GL_TRIANGLES, 0, 3);
 }

@@ -124,7 +124,7 @@ std::shared_ptr<StaticMesh> create_light_sphere() {
 
     auto sphere = scene->get_first_object();
     // sphere = std::move(sphere);
-    std::cout << sphere.mesh()->bounding_sphere.radius << std::endl;
+    // std::cout << sphere.mesh()->bounding_sphere.radius << std::endl;
 
     return sphere.mesh();
 }
@@ -141,14 +141,14 @@ std::unique_ptr<Scene> create_forest_scene() {
         PointLight light;
         light.set_position(glm::vec3(1.0f, 2.0f, 4.0f));
         light.set_color(glm::vec3(0.0f, 255.0f, 0.0f));
-        light.set_radius(1000.0f);
+        light.set_radius(100.0f);
         scene->add_object(std::move(light));
     }
     {
         PointLight light;
         light.set_position(glm::vec3(10.0f, 2.0f, -4.0f));
         light.set_color(glm::vec3(255.0f, 0.0f, 0.0f));
-        light.set_radius(500.0f);
+        light.set_radius(50.0f);
         scene->add_object(std::move(light));
     }
 
@@ -192,9 +192,6 @@ int main(int, char**) {
     auto debug_program = Program::from_files("debug.frag", "screen.vert");
     auto render_program = Program::from_files("render.frag", "screen.vert");
 
-    // auto sphere_mesh = create_light_sphere();
-    // auto sphere_material = std::make_shared<Material>(Material::empty_material(render_program, {}));
-    // auto sphere = std::make_shared<SceneObject>(sphere_mesh, sphere_material);
 
     // Texture depth(window_size, ImageFormat::Depth32_FLOAT);
     // Texture lit(window_size, ImageFormat::RGBA16_FLOAT);
@@ -221,13 +218,19 @@ int main(int, char**) {
     auto debug_normal = OM3D::Material::empty_material(debug_program, {gnormal});
     auto debug_depth = OM3D::Material::empty_material(debug_program, {depth});
 
-    auto render_material = OM3D::Material::empty_material(render_program, {gcolor, gnormal, depth});
+    auto render_material_raw = OM3D::Material::empty_material(render_program, {gcolor, gnormal, depth});
+    auto render_material = std::make_shared<Material>(render_material_raw);
+
+    auto sphere_mesh = create_light_sphere();
+    // auto sphere_material = std::make_shared<Material>(Material::empty_material(render_program, {}));
+    // auto sphere = std::make_shared<SceneObject>(sphere_mesh, sphere_material);
+    auto sphere = std::make_shared<SceneObject>(sphere_mesh, render_material);
             
     debug_color.set_cull_mode(CullMode::None);
     debug_normal.set_cull_mode(CullMode::None);
     debug_depth.set_cull_mode(CullMode::None);
     
-    render_material.set_cull_mode(CullMode::None);
+    render_material->set_cull_mode(CullMode::None);
     // render_material.set_blend_mode(BlendMode::Additive);
 
     for(;;) {
@@ -288,31 +291,21 @@ int main(int, char**) {
         }
         else {
             renderbuffer.bind();
-            render_material.bind();
-            // scene_view.render_triangle(*sphere.get());
-            scene_view.render_triangle();
+            render_material->bind();
+            scene_view.render_triangle(*sphere.get());
+            // scene_view.render_triangle();
 
+            // Apply a tonemap in compute shader
             tonemap_program->bind();
             glit.bind(0);
             color.bind_as_image(1, AccessType::WriteOnly);
             
             glDispatchCompute(align_up_to(window_size.x, 8), align_up_to(window_size.y, 8), 1);
 
+            // Blit tonemap result to screen
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             tonemap_framebuffer.blit();
         }
-
-        // Apply a tonemap in compute shader
-        {
-            // tonemap_program->bind();
-            // lit.bind(0);
-            // color.bind_as_image(1, AccessType::WriteOnly);
-            
-            // glDispatchCompute(align_up_to(window_size.x, 8), align_up_to(window_size.y, 8), 1);
-        }
-        // Blit tonemap result to screen
-        // glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        // tonemap_framebuffer.blit();
 
 
         // GUI
