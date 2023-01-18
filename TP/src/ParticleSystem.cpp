@@ -1,5 +1,6 @@
 #include <ParticleSystem.h>
 #include <cstddef>
+#include "Camera.h"
 #include "Material.h"
 
 
@@ -10,7 +11,6 @@ ParticleSystem::ParticleSystem(std::shared_ptr<Program> program_compute, std::sh
     _program_compute = std::move(program_compute);
     _render_material = std::move(material);
 
-    _particle_buffer_compute = TypedBuffer<shader::Particle>(nullptr, std::max(particles.size(), size_t(1)));
     map_particles();
     _particles = particles;
 
@@ -32,55 +32,50 @@ ParticleSystem::ParticleSystem(std::shared_ptr<Program> program_compute, std::sh
 
 void ParticleSystem::map_particles()
 {
-    // auto mapping = _particle_buffer_compute.map(AccessType::ReadWrite);
-    // for (size_t i = 0; i != _particles.size(); ++i)
-    // {
-    //     const auto &particle = _particles[i];
-    //     mapping[i] = {
-    //         particle._position, particle._radius, particle._velocity,
-    //         particle._age,      particle._force,  particle._lifetime,
-    //         particle._color,
-    //     };
-    // }
-    auto mapping = _particle_buffer_compute.map(AccessType::ReadWrite);
-    for (size_t i = 0; i != _particles.size(); ++i)
+    auto _particle_buffer_compute = TypedBuffer<shader::Particle>(nullptr, std::max(_particles.size(), size_t(1)));
     {
-        const auto &particle = _particles[i];
-        mapping[i] = {
-            particle._transform,
-            particle._color,
-            particle._velocity,
-            particle._age,
-            particle._force,
-            particle._lifetime,
-        };
+        auto mapping = _particle_buffer_compute.map(AccessType::ReadWrite);
+        for (size_t i = 0; i != _particles.size(); ++i)
+        {
+            const auto &particle = _particles[i];
+            mapping[i] = {
+                particle._transform, particle._color, particle._velocity,
+                particle._age,       particle._force, particle._lifetime,
+                0.0f, // luminosity
+            };
+        }
+        _particle_buffer_compute.bind(BufferUsage::Storage, 1);
     }
-    _particle_buffer_compute.bind(BufferUsage::Storage, 1);
 }
 
 void ParticleSystem::update(float dt)
 {
     // update in compute
-    _program_compute->bind();
-    _program_compute->set_uniform("dt", dt);
+    // _program_compute->bind();
+    _program_compute->set_uniform(HASH("dt"), dt);
     map_particles();
     glDispatchCompute(128, 1, 1);
-    
-    // draw
+}
+
+void ParticleSystem::bind_render() const
+{
     _render_material->bind();
+}
+void ParticleSystem::bind_compute() const
+{
+    _program_compute->bind();
+}
+
+void ParticleSystem::render()
+{
+    // draw
+    // _render_material->bind();
     _render_material->set_cull_mode(CullMode::None);
     _render_material->set_depth_test_mode(DepthTestMode::None);
     _render_material->set_blend_mode(BlendMode::None);
     
     map_particles(); // map again to read updated data from compute shader
 
-    render(); // instancing
-}
-
-
-// Penser a ajouter la camera pour bind le buffer de frame data (sun color, sun dir, etc)
-void ParticleSystem::render() const
-{
     _particle_vertex_buffer.bind(BufferUsage::Attribute);
     _particle_index_buffer.bind(BufferUsage::Index);
     
@@ -101,7 +96,7 @@ void ParticleSystem::render() const
     glEnableVertexAttribArray(3);
     glEnableVertexAttribArray(4);
     
-    int instance_count = _particle_buffer_compute.element_count();
+    int instance_count = _particles.size();
     glDrawElementsInstanced(GL_TRIANGLE_STRIP, int(_particle_index_buffer.element_count()), GL_UNSIGNED_INT, nullptr, instance_count);
 }
 

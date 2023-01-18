@@ -53,8 +53,10 @@ void Scene::render(const Camera& camera) const {
 
     // Render every object
     for(const SceneObject& obj : _objects) {
-        obj.material()->set_cull_mode(CullMode::Back);
-        obj.material()->set_depth_test_mode(DepthTestMode::Standard);
+        // obj.material()->set_cull_mode(CullMode::Back);
+        // obj.material()->set_depth_test_mode(DepthTestMode::Standard);
+        obj.material()->set_cull_mode(CullMode::None);
+        obj.material()->set_depth_test_mode(DepthTestMode::None);
         // obj.material()->set_blend_mode(BlendMode::Alpha);
         auto mesh = obj.mesh();
         glm::vec4 center = obj.transform() * glm::vec4(mesh->bounding_sphere.center, 1.0f);
@@ -160,6 +162,43 @@ void Scene::render_triangle(const Camera &camera, SceneObject &light_sphere) con
     light_sphere.material()->set_blend_mode(BlendMode::None);
 
     glDrawArrays(GL_TRIANGLES, 0, 3);
+}
+void Scene::render_particles(const Camera &camera, std::shared_ptr<ParticleSystem> particle_system, const float &dt) const
+{
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // glClearColor(0.5f, 0.7f, 0.8f, 0.0f);
+
+    particle_system->bind_compute();
+
+    // Fill and bind frame data buffer
+    TypedBuffer<shader::FrameData> buffer(nullptr, 1);
+    {
+        auto mapping = buffer.map(AccessType::WriteOnly);
+        mapping[0].camera.view_proj = camera.view_proj_matrix();
+        mapping[0].point_light_count = u32(_point_lights.size());
+        mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
+        mapping[0].sun_dir = glm::normalize(_sun_direction);
+    }
+    buffer.bind(BufferUsage::Uniform, 0);
+    
+    Frustum frustum = camera.build_frustum();
+    
+    // Update particles
+    particle_system->update(dt);
+    
+    particle_system->bind_render();
+
+    {
+        auto mapping = buffer.map(AccessType::WriteOnly);
+        mapping[0].camera.view_proj = camera.view_proj_matrix();
+        mapping[0].point_light_count = u32(_point_lights.size());
+        mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
+        mapping[0].sun_dir = glm::normalize(_sun_direction);
+    }
+    buffer.bind(BufferUsage::Uniform, 0);
+
+    // Render particles
+    particle_system->render();
 }
 
 }

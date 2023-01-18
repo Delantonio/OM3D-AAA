@@ -2,6 +2,7 @@
 
 #include <Particle.h>
 #include <vector>
+#include "Camera.h"
 #include "Material.h"
 #include "StaticMesh.h"
 #include "TypedBuffer.h"
@@ -52,11 +53,16 @@ namespace OM3D {
 class ParticleSystem
 {
     public:
+        ParticleSystem() = default;
+
         ParticleSystem(std::shared_ptr<Program> program_compute, std::shared_ptr<Material> material, const std::vector<Particle> &particles);
 
         void update(float dt);
-        void render() const;
+        void render();
         void map_particles();
+        
+        void bind_render() const;
+        void bind_compute() const;
 
         // void add_particle(const Particle& particle);
         // void add_particles(const std::vector<Particle>& particles);
@@ -64,10 +70,11 @@ class ParticleSystem
         void set_transform(const glm::mat4& tr);
         const glm::mat4& transform() const;
 
-    private:
+    // private:
+    public:
         std::shared_ptr<Program> _program_compute;
         std::shared_ptr<Material> _render_material;
-        TypedBuffer<shader::Particle> _particle_buffer_compute;
+        // TypedBuffer<shader::Particle> _particle_buffer_compute;
         TypedBuffer<Vertex> _particle_vertex_buffer;
         TypedBuffer<u32> _particle_index_buffer;
         std::vector<Particle> _particles;

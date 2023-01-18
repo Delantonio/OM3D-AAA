@@ -3,6 +3,7 @@
 
 #include <Scene.h>
 #include <Camera.h>
+#include "ParticleSystem.h"
 #include "SceneObject.h"
 
 namespace OM3D {
@@ -18,6 +19,8 @@ class SceneView {
         void render_triangle() const;
         // void render_triangle(std::shared_ptr<SceneObject> light_sphere) const;
         void render_triangle(SceneObject &light_sphere) const;
+        
+        void render_particles(const float &delta_time, std::shared_ptr<ParticleSystem> particle_system) const;
 
     private:
         const Scene* _scene = nullptr;

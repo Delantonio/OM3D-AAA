@@ -19,18 +19,21 @@ layout(binding = 0) uniform Data {
     FrameData frame;
 };
 
-layout(binding = 1) buffer ParticleSSBO {
+layout(std430, binding = 1) buffer ParticleSSBO {
     Particle particles[];
 };
 
-uniform mat4 model;
+// uniform mat4 model;
+uniform float dt = 0.01f;
 
 out vec3 color;
 
 void main() {
     Particle particle = particles[gl_InstanceID];
-    const vec4 position = particle.transform * vec4(in_pos, 1.0);
-    // const vec4 position = model * vec4(in_pos, 1.0);
+    mat4 model = particle.transform;
+    // const vec4 position = particle.transform * vec4(in_pos, 1.0);
+    const vec4 position = model * vec4(in_pos, 1.0);
+    particles[gl_InstanceID].color.g = mod(particles[gl_InstanceID].color.g + dt, 1.0);
     color = particle.color.rgb;
 
     // out_normal = normalize(mat3(model) * in_normal);

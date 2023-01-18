@@ -179,8 +179,8 @@ int main(int, char**) {
 
     ImGuiRenderer imgui(window);
 
-    // std::unique_ptr<Scene> scene = create_default_scene();
-    // SceneView scene_view(scene.get());
+    std::unique_ptr<Scene> cube_scene = create_default_scene();
+    SceneView cube_scene_view(cube_scene.get());
     
 
     std::unique_ptr<Scene> scene = create_forest_scene();
@@ -189,6 +189,10 @@ int main(int, char**) {
     // Set the camera for the forest scene
     // glm::mat4 view = glm::lookAt(glm::vec3(50.0f, 75.0f, 150.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     // scene_view.camera().set_view(view);
+    //
+    // Set the camera for the particles scene
+    glm::mat4 view = glm::lookAt(glm::vec3(20.0f, 20.0f, 20.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    scene_view.camera().set_view(view);
 
     auto tonemap_program = Program::from_file("tonemap.comp");
     
@@ -236,22 +240,29 @@ int main(int, char**) {
     render_material->set_cull_mode(CullMode::None);
     // render_material.set_blend_mode(BlendMode::Additive);
     
-    std::vector<Particle> particles;
-    for (size_t i = 0;  i < 100; i++)
-    {
-        Particle p;
-        p._transform = glm::translate(p._transform, glm::vec3(2.0f * i, 0.0f, 0.0f));
-        p._velocity = glm::vec3(0.0f, 1.0f, 0.0f);
-        // float c = 1.01f * i;
-        // p._color = glm::vec4(c, c, c, 1.0f);
-        p._color = glm::vec4(255.0f, 0.0f, 0.0f, 1.0f);
-        // p._force = glm::vec3(0.0f, -9.81f, 0.0f);
-        p._force = glm::vec3(0.0f, 0.0f, 0.0f);
-        p._lifetime = 1.0f;
-        p._age = 0.0f;
-        p._radius = 0.1f;
-        particles.push_back(p);
-    }
+    auto trans = cube_scene->objects()[0].transform();
+
+    std::vector<Particle> particles = { Particle(
+        trans, glm::vec3(0.0f, 1.0f, 0.0f),
+        glm::vec4(0.8f, 0.0f, 0.2f, 1.0f),
+        0.1f, 0.1f) };
+        
+    // std::vector<Particle> particles;
+    // for (size_t i = 0;  i < 100; i++)
+    // {
+    //     Particle p;
+    //     p._transform = glm::translate(trans, glm::vec3(2.0f * i, 0.0f, 2.0f * i));
+    //     p._velocity = glm::vec3(0.0f, 1.0f, 0.0f);
+    //     // float c = 1.01f * i;
+    //     // p._color = glm::vec4(c, c, c, 1.0f);
+    //     p._color = glm::vec4(255.0f, 0.0f, 0.0f, 1.0f);
+    //     // p._force = glm::vec3(0.0f, -9.81f, 0.0f);
+    //     p._force = glm::vec3(0.0f, 0.0f, 0.0f);
+    //     p._lifetime = 1.0f;
+    //     p._age = 0.0f;
+    //     p._radius = 0.1f;
+    //     particles.push_back(p);
+    // }
     
     Texture particles_texture(window_size, ImageFormat::RGBA16_FLOAT);
     Framebuffer particles_framebuffer(nullptr, std::array{&particles_texture});
@@ -261,7 +272,28 @@ int main(int, char**) {
     auto particles_material_raw = OM3D::Material::empty_material(particles_render_program, {});
     auto particles_material = std::make_shared<Material>(particles_material_raw);
     
-    ParticleSystem particle_system(particles_compute_program, particles_material, particles); 
+    std::shared_ptr<ParticleSystem> particle_system =
+        std::make_shared<ParticleSystem>(ParticleSystem(
+            particles_compute_program, particles_material, particles));
+
+
+    TypedBuffer<shader::Particle> _particle_buffer_compute(
+        nullptr, std::max(particles.size(), size_t(1)));
+
+    auto mapping = _particle_buffer_compute.map(AccessType::ReadWrite);
+    for (size_t i = 0; i != particles.size(); ++i)
+    {
+        const auto &particle = particles[i];
+        mapping[i] = {
+            particle._transform,
+            particle._color,
+            particle._velocity,
+            particle._age,
+            particle._force,
+            particle._lifetime,
+            0.0f, // luminosity
+        };
+    }
 
     for(;;) {
         glfwPollEvents();
@@ -272,15 +304,92 @@ int main(int, char**) {
         update_delta_time();
 
         if(const auto& io = ImGui::GetIO(); !io.WantCaptureMouse && !io.WantCaptureKeyboard) {
+            // process_inputs(window, scene_view.camera());
             process_inputs(window, scene_view.camera());
         }
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glClearColor(0.5f, 0.7f, 0.8f, 0.0f);
+        // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // glClearColor(0.5f, 0.7f, 0.8f, 0.0f);
 
         // test particle system
+        // Fill and bind frame data buffer
+        TypedBuffer<shader::FrameData> buffer(nullptr, 1);
+
+        auto buf_mapping = buffer.map(AccessType::ReadWrite);
+        buf_mapping[0].camera.view_proj =
+            scene_view.camera().view_proj_matrix();
+        buf_mapping[0].point_light_count = 0;
+        buf_mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
+        buf_mapping[0].sun_dir = glm::normalize(scene->sun_direction());
+
+
         particles_framebuffer.bind();
-        particle_system.update(delta_time);
+        // cube_scene_view.render();
+
+        // particle_system->bind_compute();
+        // particle_system->_program_compute->bind();
+
+        // buffer.bind(BufferUsage::Uniform, 0);
+
+        // _particle_buffer_compute.bind(BufferUsage::Storage, 1);
+
+        // // Update particles  // particle_system->update(delta_time);
+        // particle_system->_program_compute->set_uniform(HASH("dt"), delta_time);
+
+        // glDispatchCompute(128, 1, 1);
+
+        // particle_system->bind_render();
+        particle_system->_render_material->bind();
+
+        // auto mapping = buffer.map(AccessType::WriteOnly);
+
+        buffer.bind(BufferUsage::Uniform, 0);
+
+        _particle_buffer_compute.bind(BufferUsage::Storage, 1);
+
+        particle_system->_render_material->set_uniform(HASH("dt"), delta_time);
+        // Render particles
+        // particle_system->render();
+
+        particle_system->_render_material->set_cull_mode(CullMode::None);
+        particle_system->_render_material->set_depth_test_mode(
+            DepthTestMode::None);
+        particle_system->_render_material->set_blend_mode(BlendMode::None);
+
+        particle_system->_particle_vertex_buffer.bind(BufferUsage::Attribute);
+        particle_system->_particle_index_buffer.bind(BufferUsage::Index);
+
+        // Vertex position
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(Vertex), nullptr);
+        // Vertex normal
+        glVertexAttribPointer(1, 3, GL_FLOAT, false, sizeof(Vertex),
+                              reinterpret_cast<void *>(3 * sizeof(float)));
+        // Vertex uv
+        glVertexAttribPointer(2, 2, GL_FLOAT, false, sizeof(Vertex),
+                              reinterpret_cast<void *>(6 * sizeof(float)));
+        // Tangent / bitangent sign
+        glVertexAttribPointer(3, 4, GL_FLOAT, false, sizeof(Vertex),
+                              reinterpret_cast<void *>(8 * sizeof(float)));
+        // Vertex color
+        glVertexAttribPointer(4, 3, GL_FLOAT, false, sizeof(Vertex),
+                              reinterpret_cast<void *>(12 * sizeof(float)));
+
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(2);
+        glEnableVertexAttribArray(3);
+        glEnableVertexAttribArray(4);
+
+        int instance_count = particle_system->_particles.size();
+        glDrawElementsInstanced(
+            GL_TRIANGLE_STRIP,
+            int(particle_system->_particle_index_buffer.element_count()),
+            GL_UNSIGNED_INT, nullptr, instance_count);
+
+        // scene_view.render_particles(delta_time, particle_system);
+        // particles_framebuffer.blit();
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
         tonemap_program->bind();
         particles_texture.bind(0);
         color.bind_as_image(1, AccessType::WriteOnly);

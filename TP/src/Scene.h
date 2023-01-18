@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <memory>
+#include "ParticleSystem.h"
 
 namespace OM3D {
 
@@ -21,6 +22,7 @@ class Scene : NonMovable {
         void render_triangle(const Camera &camera) const;
         // void render_triangle(const Camera &camera, std::shared_ptr<SceneObject> light_sphere) const;
         void render_triangle(const Camera &camera, SceneObject &light_sphere) const;
+        void render_particles(const Camera &camera, std::shared_ptr<ParticleSystem> particle_system, const float &dt) const;
 
         void add_object(SceneObject obj);
         void add_object(PointLight obj);
@@ -33,6 +35,11 @@ class Scene : NonMovable {
         SceneObject get_first_object()
         {
             return std::move(_objects[0]);
+        }
+        
+        glm::vec3 sun_direction() const
+        {
+            return _sun_direction;
         }
 
     private:

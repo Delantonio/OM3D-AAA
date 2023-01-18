@@ -10,8 +10,8 @@ class Particle
         // {}
         Particle() = default;
 
-        Particle(glm::mat4 transform, glm::vec3 velocity, glm::vec4 color, float radius, float age, float lifetime)
-            : _transform(transform), _velocity(velocity), _color(color), _radius(radius), _age(age), _lifetime(lifetime)
+        Particle(glm::mat4 transform, glm::vec3 velocity, glm::vec4 color, float radius, float lifetime)
+            : _transform(transform), _velocity(velocity), _color(color), _radius(radius), _age(0.0f), _lifetime(lifetime)
         {}
 
         glm::mat4 _transform;

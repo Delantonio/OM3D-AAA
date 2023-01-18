@@ -32,4 +32,11 @@ void SceneView::render_triangle(SceneObject &light_sphere) const {
     }
 }
 
+void SceneView::render_particles(const float &delta_time, std::shared_ptr<ParticleSystem> particle_system) const
+{
+    if(_scene) {
+        _scene->render_particles(_camera, particle_system, delta_time);
+    }
+}
+
 }
