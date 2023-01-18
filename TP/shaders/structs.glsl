@@ -26,6 +26,7 @@ struct Particle {
     float age;
     vec3 force;
     float lifetime;
+    float luminosity;
 };
 
 // struct Particle {

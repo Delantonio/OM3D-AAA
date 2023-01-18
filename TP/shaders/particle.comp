@@ -13,6 +13,12 @@ layout(binding = 1) buffer ParticleSSBO {
 };
 
 uniform float dt = 0.01f;
+uniform mat4 view_proj;
+    const mat4 proj = mat4(2.0 / viewport_size.x, 0.0, 0.0, 0.0,
+                           0.0, 2.0 / -viewport_size.y, 0.0, 0.0,
+                           0.0, 0.0, -1.0, 0.0,
+                           -1.0, 1.0, 0.0, 1.0);
+
 
 void main()
 {
@@ -21,6 +27,19 @@ void main()
     // if (index >= frame.numParticles) {
     //     return;
     // }
+
+    particles[index].transform = proj * translate(particles[index].transform, particles[index].velocity * dt); // penser à scale la matrice
+    particles[index].velocity = particles[index].velocity + vec3(0.0, -9.81, 0.0) * dt;
+    particles[index].velocity = particles[index].velocity * 0.99f;
+    particles[index].age += dt;
+    if (particles[index].age > particles[index].lifetime) {
+        //dead
+    }
+
+    particles[index].luminosity = sin(particles[index].age * 10.0f) * 0.5f + 0.5f;
+    particles[index].color = vec4(1.0, 0.0, 0.0, 1.0) * particles[index].luminosity;
+
+
     mat4 model_transform = particles[index].transform;
     // model_transform = translate(model_transform, vec3(0, 1, 0) * dt);
 
