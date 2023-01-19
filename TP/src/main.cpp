@@ -242,27 +242,28 @@ int main(int, char**) {
     
     auto trans = cube_scene->objects()[0].transform();
 
-    std::vector<Particle> particles = { Particle(
-        trans, glm::vec3(0.0f, 1.0f, 0.0f),
-        glm::vec4(0.8f, 0.0f, 0.2f, 1.0f),
-        0.1f, 0.1f) };
+    // std::vector<Particle> particles = { Particle(
+    //     trans, glm::vec3(0.0f, 1.0f, 0.0f),
+    //     glm::vec4(0.8f, 0.0f, 0.2f, 1.0f),
+    //     0.1f, 0.1f, glm::vec3(0.5, 0.5, 0.0)) };
         
-    // std::vector<Particle> particles;
-    // for (size_t i = 0;  i < 100; i++)
-    // {
-    //     Particle p;
-    //     p._transform = glm::translate(trans, glm::vec3(2.0f * i, 0.0f, 2.0f * i));
-    //     p._velocity = glm::vec3(0.0f, 1.0f, 0.0f);
-    //     // float c = 1.01f * i;
-    //     // p._color = glm::vec4(c, c, c, 1.0f);
-    //     p._color = glm::vec4(255.0f, 0.0f, 0.0f, 1.0f);
-    //     // p._force = glm::vec3(0.0f, -9.81f, 0.0f);
-    //     p._force = glm::vec3(0.0f, 0.0f, 0.0f);
-    //     p._lifetime = 1.0f;
-    //     p._age = 0.0f;
-    //     p._radius = 0.1f;
-    //     particles.push_back(p);
-    // }
+    std::vector<Particle> particles;
+    for (size_t i = 0;  i < 100; i++)
+    {
+        Particle p;
+        p._transform = glm::translate(trans, glm::vec3(2.0f * i, 0.0f, 2.0f * i));
+        p._velocity = glm::vec3(0.0f, 1.0f, 0.0f);
+        // float c = 1.01f * i;
+        // p._color = glm::vec4(c, c, c, 1.0f);
+        p._color = glm::vec4(255.0f, 0.0f, 0.0f, 1.0f);
+        // p._force = glm::vec3(0.0f, -9.81f, 0.0f);
+        p._force = glm::vec3(0.0f, 0.0f, 0.0f);
+        p._lifetime = 1.0f;
+        p._age = 0.0f;
+        p._radius = 0.1f;
+        p._center = glm::vec3(0.5 * i, 0.5 * i, 1.0 * i);
+        particles.push_back(p);
+    }
     
     Texture particles_texture(window_size, ImageFormat::RGBA16_FLOAT);
     Framebuffer particles_framebuffer(nullptr, std::array{&particles_texture});
@@ -291,6 +292,7 @@ int main(int, char**) {
             particle._age,
             particle._force,
             particle._lifetime,
+            particle._center,
             0.0f, // luminosity
         };
     }

@@ -47,11 +47,15 @@ void main()
     //     return;
     // }
     
+    particles[index].center += particles[index].velocity + vec3(sin(particles[index].age), 9.81, 0.0) * dt;
 
-    mat4 view_proj = frame.camera.view_proj; 
-    mat4 view = frame.camera.view;
-    mat4 model_view = view * particles[index].transform;
-    particles[index].transform = model_view;
+    
+
+
+    // mat4 view_proj = frame.camera.view_proj; 
+    // mat4 view = frame.camera.view;
+    // mat4 model_view = view * particles[index].transform;
+    // particles[index].transform = model_view;
     
     // rotate to face camera
     

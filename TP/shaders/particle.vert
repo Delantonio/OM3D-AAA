@@ -28,26 +28,34 @@ uniform float dt = 0.01f;
 
 out vec3 color;
 
-mat4 proj = mat4(2.0 / 1600, 0.0, 0.0, 0.0,
-                           0.0, 2.0 / -900, 0.0, 0.0,
-                           0.0, 0.0, -1.0, 0.0,
-                           -1.0, 1.0, 0.0, 1.0);
+// mat4 proj = mat4(2.0 / 1600, 0.0, 0.0, 0.0,
+//                            0.0, 2.0 / -900, 0.0, 0.0,
+//                            0.0, 0.0, -1.0, 0.0,
+//                            -1.0, 1.0, 0.0, 1.0);
 
 void main() {
-    Particle particle = particles[gl_InstanceID];
-    mat4 model_view = particle.transform;
-    // const vec4 position = particle.transform * vec4(in_pos, 1.0);
-    const vec4 position = model_view * vec4(in_pos, 1.0);
+    
+
+
+
+    //mat4 model = particles[gl_InstanceID].transform;
+    mat4 view = frame.camera.view;
+    mat4 proj = frame.camera.proj;
+
+    vec4 modelSpace = view * vec4(particles[gl_InstanceID].center, 1.0);
+
+    vec2 v = modelSpace.xy + in_pos.xy;
+    gl_Position = proj * vec4(v, modelSpace.z, 1.0);
+
+    // vec4 camera_right = view * vec4(1.0, 0.0, 0.0, 0.0);
+    // vec4 camera_up = view * vec4(0.0, 1.0, 0.0, 0.0);
+    
+    // vec4 center = vec4(particles[gl_InstanceID].center, 1.0) * particles[gl_InstanceID].transform;
+
+    // vec3 position = center.xyz + camera_right.xyz * in_pos.x + camera_up.xyz * in_pos.y;
+    
+    // const vec4 position = model_view * vec4(in_pos, 1.0);
+
     particles[gl_InstanceID].color.g = mod(particles[gl_InstanceID].color.g + dt, 1.0);
-    color = particle.color.rgb;
-
-    // out_normal = normalize(mat3(model) * in_normal);
-    // out_tangent = normalize(mat3(model) * in_tangent_bitangent_sign.xyz);
-    // out_bitangent = cross(out_tangent, out_normal) * (in_tangent_bitangent_sign.w > 0.0 ? 1.0 : -1.0);
-
-    // out_uv = in_uv;
-    // out_color = in_color;
-    // out_position = position.xyz;
-
-    gl_Position = proj * position;
+    color = particles[gl_InstanceID].color.rgb;
 }

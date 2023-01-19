@@ -41,6 +41,7 @@ void ParticleSystem::map_particles()
             mapping[i] = {
                 particle._transform, particle._color, particle._velocity,
                 particle._age,       particle._force, particle._lifetime,
+                particle._center,
                 0.0f, // luminosity
             };
         }
