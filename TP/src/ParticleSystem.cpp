@@ -32,21 +32,21 @@ ParticleSystem::ParticleSystem(std::shared_ptr<Program> program_compute, std::sh
 
 void ParticleSystem::map_particles()
 {
-    auto _particle_buffer_compute = TypedBuffer<shader::Particle>(nullptr, std::max(_particles.size(), size_t(1)));
-    {
-        auto mapping = _particle_buffer_compute.map(AccessType::ReadWrite);
-        for (size_t i = 0; i != _particles.size(); ++i)
-        {
-            const auto &particle = _particles[i];
-            mapping[i] = {
-                particle._transform, particle._color, particle._velocity,
-                particle._age,       particle._force, particle._lifetime,
-                particle._center,
-                0.0f, // luminosity
-            };
-        }
-        _particle_buffer_compute.bind(BufferUsage::Storage, 1);
-    }
+    // auto _particle_buffer_compute = TypedBuffer<shader::Particle>(nullptr, std::max(_particles.size(), size_t(1)));
+    // {
+    //     auto mapping = _particle_buffer_compute.map(AccessType::ReadWrite);
+    //     for (size_t i = 0; i != _particles.size(); ++i)
+    //     {
+    //         const auto &particle = _particles[i];
+    //         mapping[i] = {
+    //             particle._transform, particle._color, particle._velocity,
+    //             particle._age,       particle._force, particle._lifetime,
+    //             particle._center,
+    //             0.0f, // luminosity
+    //         };
+    //     }
+    //     _particle_buffer_compute.bind(BufferUsage::Storage, 1);
+    // }
 }
 
 void ParticleSystem::update(float dt)

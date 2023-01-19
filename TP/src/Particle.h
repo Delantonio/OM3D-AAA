@@ -10,18 +10,27 @@ class Particle
         // {}
         Particle() = default;
 
-        Particle(glm::mat4 transform, glm::vec3 velocity, glm::vec4 color, float radius, float lifetime, glm::vec3 center)
-            : _transform(transform), _velocity(velocity), _color(color), _center(center), _radius(radius), _age(0.0f), _lifetime(lifetime)
+        // Particle(glm::mat4 transform, glm::vec3 velocity, glm::vec4 color, float radius, float lifetime, glm::vec3 center)
+        //     : _transform(transform), _velocity(velocity), _color(color), _center(center), _radius(radius), _age(0.0f), _lifetime(lifetime)
+        // {}
+
+        Particle(glm::vec4 color, glm::vec3 velocity,
+                 float duration, glm::vec3 force, float seed, glm::vec3 center,
+                 float luminosity)
+            : _color(color)
+            , _velocity(velocity)
+            , _duration(duration)
+            , _force(force)
+            , _seed(seed)
+            , _center(center)
+            , _luminosity(luminosity)
         {}
 
-        glm::mat4 _transform;
-        // glm::vec3 _position;
-        glm::vec3 _velocity;
-        glm::vec3 _force;
         glm::vec4 _color;
+        glm::vec3 _velocity;
+        float _duration;
+        glm::vec3 _force;
+        float _seed;
         glm::vec3  _center;
-
-        float _radius;
-        float _age;
-        float _lifetime;
+        float _luminosity;
 };

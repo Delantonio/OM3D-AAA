@@ -240,7 +240,7 @@ int main(int, char**) {
     render_material->set_cull_mode(CullMode::None);
     // render_material.set_blend_mode(BlendMode::Additive);
     
-    auto trans = cube_scene->objects()[0].transform();
+    // auto trans = cube_scene->objects()[0].transform();
 
     // std::vector<Particle> particles = { Particle(
     //     trans, glm::vec3(0.0f, 1.0f, 0.0f),
@@ -248,20 +248,17 @@ int main(int, char**) {
     //     0.1f, 0.1f, glm::vec3(0.5, 0.5, 0.0)) };
         
     std::vector<Particle> particles;
-    for (size_t i = 0;  i < 100; i++)
+    for (size_t i = 0;  i < 25; i++)
     {
         Particle p;
-        p._transform = glm::translate(trans, glm::vec3(2.0f * i, 0.0f, 2.0f * i));
+        p._color = glm::vec4(1.0f, 0.7f, 0.0f, 1.0f);
         p._velocity = glm::vec3(0.0f, 1.0f, 0.0f);
-        // float c = 1.01f * i;
-        // p._color = glm::vec4(c, c, c, 1.0f);
-        p._color = glm::vec4(255.0f, 0.0f, 0.0f, 1.0f);
-        // p._force = glm::vec3(0.0f, -9.81f, 0.0f);
+        p._duration = 1.0f;
         p._force = glm::vec3(0.0f, 0.0f, 0.0f);
-        p._lifetime = 1.0f;
-        p._age = 0.0f;
-        p._radius = 0.1f;
+        float seed = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+        p._seed = seed;
         p._center = glm::vec3(0.5 * i, 0.5 * i, 1.0 * i);
+        p._luminosity = 1.0f;
         particles.push_back(p);
     }
     
@@ -280,24 +277,24 @@ int main(int, char**) {
 
     TypedBuffer<shader::Particle> _particle_buffer_compute(
         nullptr, std::max(particles.size(), size_t(1)));
-
-    auto mapping = _particle_buffer_compute.map(AccessType::ReadWrite);
-    for (size_t i = 0; i != particles.size(); ++i)
+    
     {
-        const auto &particle = particles[i];
-        mapping[i] = {
-            particle._transform,
-            particle._color,
-            particle._velocity,
-            particle._age,
-            particle._force,
-            particle._lifetime,
-            particle._center,
-            0.0f, // luminosity
-        };
+        auto mapping = _particle_buffer_compute.map(AccessType::ReadWrite);
+        for (size_t i = 0; i != particles.size(); ++i)
+        {
+            const auto &particle = particles[i];
+            mapping[i] = {
+                particle._color,      particle._velocity, particle._duration,
+                particle._force,      particle._seed,     particle._center,
+                particle._luminosity,
+            };
+        }
     }
     
     glm::mat4 projection = scene_view.camera().build_projection(0.001f);
+    
+    Framebuffer bloom(nullptr, std::array{&color});
+    auto bloom_program = Program::from_file("blur.comp");
 
     for(;;) {
         glfwPollEvents();
@@ -319,15 +316,16 @@ int main(int, char**) {
         // Fill and bind frame data buffer
         TypedBuffer<shader::FrameData> buffer(nullptr, 1);
 
-        auto buf_mapping = buffer.map(AccessType::ReadWrite);
-        buf_mapping[0].camera.view_proj =
-            scene_view.camera().view_proj_matrix();
-        buf_mapping[0].camera.view = scene_view.camera().view_matrix();
-        buf_mapping[0].camera.proj = projection;
-        buf_mapping[0].point_light_count = 0;
-        buf_mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
-        buf_mapping[0].sun_dir = glm::normalize(scene->sun_direction());
-
+        {
+            auto buf_mapping = buffer.map(AccessType::ReadWrite);
+            buf_mapping[0].camera.view_proj =
+                scene_view.camera().view_proj_matrix();
+            buf_mapping[0].camera.view = scene_view.camera().view_matrix();
+            buf_mapping[0].camera.proj = projection;
+            buf_mapping[0].point_light_count = 0;
+            buf_mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
+            buf_mapping[0].sun_dir = glm::normalize(scene->sun_direction());
+        }
 
         particles_framebuffer.bind();
         // cube_scene_view.render();
@@ -342,7 +340,8 @@ int main(int, char**) {
         // // Update particles  // particle_system->update(delta_time);
         particle_system->_program_compute->set_uniform(HASH("dt"), delta_time);
 
-        glDispatchCompute(128, 1, 1);
+        glDispatchCompute(25, 1, 1);
+        glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
         // particle_system->bind_render();
         particle_system->_render_material->bind();
@@ -395,8 +394,10 @@ int main(int, char**) {
         // scene_view.render_particles(delta_time, particle_system);
         // particles_framebuffer.blit();
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-        tonemap_program->bind();
+        
+        // bloom
+        bloom_program->bind();
+        bloom_program->set_uniform(HASH("x_blur"), (unsigned int)true);
         particles_texture.bind(0);
         color.bind_as_image(1, AccessType::WriteOnly);
 
@@ -404,7 +405,21 @@ int main(int, char**) {
                           align_up_to(window_size.y, 8), 1);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        tonemap_framebuffer.blit();
+        bloom.blit();
+
+        // tonemap
+
+        // tonemap_program->bind();
+        // particles_texture.bind(0);
+        // color.bind_as_image(1, AccessType::WriteOnly);
+
+        // glDispatchCompute(align_up_to(window_size.x, 8),
+        //                   align_up_to(window_size.y, 8), 1);
+
+        // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        // tonemap_framebuffer.blit();
+
+        // ========
 
         // // Render the scene
         // {

@@ -2,73 +2,36 @@
 
 #include "utils.glsl"
 
-layout(local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x = 25, local_size_y = 1, local_size_z = 1) in;
 
 layout(binding = 0) uniform Data {
     FrameData frame;
 };
 
-layout(std430, binding = 1) buffer ParticleSSBO {
+layout(binding = 1) buffer ParticleSSBO {
     Particle particles[];
 };
 
 uniform float dt = 0.01f;
-// uniform float anim_time = 0.0f;
-// uniform mat4 view_proj;
-    // const mat4 proj = mat4(2.0 / viewport_size.x, 0.0, 0.0, 0.0,
-    //                        0.0, 2.0 / -viewport_size.y, 0.0, 0.0,
-    //                        0.0, 0.0, -1.0, 0.0,
-    //                        -1.0, 1.0, 0.0, 1.0);
-    
-mat4 lookAt(vec3 eye, vec3 at, vec3 up)
+
+float rand(vec2 co)
 {
-  vec3 zaxis = normalize(at - eye);
-  vec3 xaxis = normalize(cross(zaxis, up));
-  vec3 yaxis = cross(xaxis, zaxis);
-
-  zaxis *= -1.0;
-
-  mat4 viewMatrix = {
-    vec4(xaxis.x, xaxis.y, xaxis.z, -dot(xaxis, eye)),
-    vec4(yaxis.x, yaxis.y, yaxis.z, -dot(yaxis, eye)),
-    vec4(zaxis.x, zaxis.y, zaxis.z, -dot(zaxis, eye)),
-    vec4(0, 0, 0, 1)
-  };
-
-  return viewMatrix;
+    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
 }
-
 
 void main()
 {
     uint index = gl_GlobalInvocationID.x;
-    // frame.numParticles = 100;
-    // if (index >= frame.numParticles) {
-    //     return;
-    // }
     
-    particles[index].center += particles[index].velocity + vec3(sin(particles[index].age), 9.81, 0.0) * dt;
+    particles[index].center += vec3(0.0, 1.0, 0.0) * dt;
+    particles[index].color.g = mod(particles[index].color.g + dt, 1.0);
+    particles[index].duration -= dt;
 
-    
+    vec3 direction = vec3(sin(particles[index].duration * 2.0 * particles[index].seed) * 10.0, 1.0, 0.0);
+    particles[index].center += direction * dt * particles[index].seed;
 
+    // particles[index].center += particles[index].velocity + vec3(sin(particles[index].age), 9.81, 0.0) * dt;
 
-    // mat4 view_proj = frame.camera.view_proj; 
-    // mat4 view = frame.camera.view;
-    // mat4 model_view = view * particles[index].transform;
-    // particles[index].transform = model_view;
-    
-    // rotate to face camera
-    
-    // vec3 cam_pos = (inverse(frame.camera.view_proj) * vec4(vec3(0.0), 1.0)).xyz;
-    // vec3 cam_up = (particles[index].transform * vec4(0.0, 1.0, 0.0, 0.0)).xyz;
-    // vec3 particle_pos = (particles[index].transform * vec4(0.0, 0.0, 0.0, 1.0)).xyz; 
-    // mat4 rot = lookAt(cam_pos, particle_pos, cam_up);
-
-    // particles[index].transform = rot * particles[index].transform; // penser à scale la matrice
-    
-
-
-    
     // vec4 vel = vec4(particles[index].velocity, 1.0) * dt;
     // particles[index].velocity = particles[index].velocity + vec3(sin(particles[index].age), 9.81, 0.0) * dt;
 
@@ -82,11 +45,4 @@ void main()
     // particles[index].luminosity = sin(particles[index].age * 10.0f) * 0.5f + 0.5f;
     // particles[index].color.g = mod(particles[index].color.g + dt, 1.0);
     // particles[index].color = vec4(1.0, 0.0, 0.0, 1.0) * particles[index].luminosity;
-
-
-    // particles[index].color = vec4(1.0, 0.0, 0.0, 1.0);
-    // mat4 model_transform = particles[index].transform;
-    // model_transform = translate(model_transform, vec3(0, 1, 0) * dt);
-
-    // model_transform = translate(model_transform, particles[index].velocity * dt);
 }

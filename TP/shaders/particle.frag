@@ -6,7 +6,7 @@ layout(binding = 0) uniform Data {
     FrameData frame;
 };
 
-layout(std430, binding = 1) buffer ParticleSSBO {
+layout(binding = 1) buffer ParticleSSBO {
     Particle particles[];
 };
 
