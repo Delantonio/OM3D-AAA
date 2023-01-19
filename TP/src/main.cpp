@@ -293,7 +293,10 @@ int main(int, char**) {
     
     glm::mat4 projection = scene_view.camera().build_projection(0.001f);
     
-    Framebuffer bloom(nullptr, std::array{&color});
+    Texture x_bloom(window_size, ImageFormat::RGBA16_FLOAT);
+    Texture xy_bloom(window_size, ImageFormat::RGBA16_FLOAT);
+    Framebuffer x_bloom_buffer(nullptr, std::array{&x_bloom});
+    Framebuffer xy_bloom_buffer(nullptr, std::array{&xy_bloom});
     auto bloom_program = Program::from_file("blur.comp");
 
     for(;;) {
@@ -399,25 +402,36 @@ int main(int, char**) {
         bloom_program->bind();
         bloom_program->set_uniform(HASH("x_blur"), (unsigned int)true);
         particles_texture.bind(0);
+        x_bloom.bind_as_image(1, AccessType::WriteOnly);
+
+        glDispatchCompute(align_up_to(window_size.x, 8),
+                          align_up_to(window_size.y, 8), 1);
+        glMemoryBarrier(GL_ALL_BARRIER_BITS);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        x_bloom_buffer.blit();
+
+        bloom_program->set_uniform(HASH("x_blur"), (unsigned int)false);
+        x_bloom.bind(0);
+        xy_bloom.bind_as_image(1, AccessType::WriteOnly);
+
+        glDispatchCompute(align_up_to(window_size.x, 8),
+                          align_up_to(window_size.y, 8), 1);
+        glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        xy_bloom_buffer.blit();
+
+        // tonemap
+
+        tonemap_program->bind();
+        xy_bloom.bind(0);
         color.bind_as_image(1, AccessType::WriteOnly);
 
         glDispatchCompute(align_up_to(window_size.x, 8),
                           align_up_to(window_size.y, 8), 1);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        bloom.blit();
-
-        // tonemap
-
-        // tonemap_program->bind();
-        // particles_texture.bind(0);
-        // color.bind_as_image(1, AccessType::WriteOnly);
-
-        // glDispatchCompute(align_up_to(window_size.x, 8),
-        //                   align_up_to(window_size.y, 8), 1);
-
-        // glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        // tonemap_framebuffer.blit();
+        tonemap_framebuffer.blit();
 
         // ========
 
