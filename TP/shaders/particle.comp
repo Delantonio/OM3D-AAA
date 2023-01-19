@@ -19,6 +19,24 @@ uniform float dt = 0.01f;
     //                        0.0, 2.0 / -viewport_size.y, 0.0, 0.0,
     //                        0.0, 0.0, -1.0, 0.0,
     //                        -1.0, 1.0, 0.0, 1.0);
+    
+mat4 lookAt(vec3 eye, vec3 at, vec3 up)
+{
+  vec3 zaxis = normalize(at - eye);
+  vec3 xaxis = normalize(cross(zaxis, up));
+  vec3 yaxis = cross(xaxis, zaxis);
+
+  zaxis *= -1.0;
+
+  mat4 viewMatrix = {
+    vec4(xaxis.x, xaxis.y, xaxis.z, -dot(xaxis, eye)),
+    vec4(yaxis.x, yaxis.y, yaxis.z, -dot(yaxis, eye)),
+    vec4(zaxis.x, zaxis.y, zaxis.z, -dot(zaxis, eye)),
+    vec4(0, 0, 0, 1)
+  };
+
+  return viewMatrix;
+}
 
 
 void main()
@@ -29,30 +47,41 @@ void main()
     //     return;
     // }
     
-    // mat4 proj = mat4(2.0 / frame.viewport_size.x, 0.0, 0.0, 0.0,
-    //                        0.0, 2.0 / -frame.viewport_size.y, 0.0, 0.0,
-    //                        0.0, 0.0, -1.0, 0.0,
-    //                        -1.0, 1.0, 0.0, 1.0);
+
+    mat4 view_proj = frame.camera.view_proj; 
+    mat4 view = frame.camera.view;
+    mat4 model_view = view * particles[index].transform;
+    particles[index].transform = model_view;
+    
+    // rotate to face camera
+    
+    // vec3 cam_pos = (inverse(frame.camera.view_proj) * vec4(vec3(0.0), 1.0)).xyz;
+    // vec3 cam_up = (particles[index].transform * vec4(0.0, 1.0, 0.0, 0.0)).xyz;
+    // vec3 particle_pos = (particles[index].transform * vec4(0.0, 0.0, 0.0, 1.0)).xyz; 
+    // mat4 rot = lookAt(cam_pos, particle_pos, cam_up);
+
+    // particles[index].transform = rot * particles[index].transform; // penser à scale la matrice
+    
+
 
     
-    vec4 vel = vec4(particles[index].velocity, 1.0) * dt;
-    particles[index].transform = frame.camera.view_proj * particles[index].transform; // penser à scale la matrice
-    // particles[index].velocity = particles[index].velocity + vec3(sin(anim_time), 9.81, 0.0) * dt;
+    // vec4 vel = vec4(particles[index].velocity, 1.0) * dt;
+    // particles[index].velocity = particles[index].velocity + vec3(sin(particles[index].age), 9.81, 0.0) * dt;
 
 
-    particles[index].velocity = particles[index].velocity * 0.99f;
-    particles[index].age += dt;
-    if (particles[index].age > particles[index].lifetime) {
-        //dead
-    }
+    // particles[index].velocity = particles[index].velocity * 0.99f;
+    // particles[index].age += dt;
+    // if (particles[index].age > particles[index].lifetime) {
+    //     //dead
+    // }
 
-    particles[index].luminosity = sin(particles[index].age * 10.0f) * 0.5f + 0.5f;
-    particles[index].color.g = mod(particles[index].color.g + dt, 1.0);
+    // particles[index].luminosity = sin(particles[index].age * 10.0f) * 0.5f + 0.5f;
+    // particles[index].color.g = mod(particles[index].color.g + dt, 1.0);
     // particles[index].color = vec4(1.0, 0.0, 0.0, 1.0) * particles[index].luminosity;
 
 
     // particles[index].color = vec4(1.0, 0.0, 0.0, 1.0);
-    mat4 model_transform = particles[index].transform;
+    // mat4 model_transform = particles[index].transform;
     // model_transform = translate(model_transform, vec3(0, 1, 0) * dt);
 
     // model_transform = translate(model_transform, particles[index].velocity * dt);

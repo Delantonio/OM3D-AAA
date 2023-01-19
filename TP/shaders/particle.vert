@@ -28,11 +28,16 @@ uniform float dt = 0.01f;
 
 out vec3 color;
 
+mat4 proj = mat4(2.0 / 1600, 0.0, 0.0, 0.0,
+                           0.0, 2.0 / -900, 0.0, 0.0,
+                           0.0, 0.0, -1.0, 0.0,
+                           -1.0, 1.0, 0.0, 1.0);
+
 void main() {
     Particle particle = particles[gl_InstanceID];
-    mat4 model = particle.transform;
+    mat4 model_view = particle.transform;
     // const vec4 position = particle.transform * vec4(in_pos, 1.0);
-    const vec4 position = model * vec4(in_pos, 1.0);
+    const vec4 position = model_view * vec4(in_pos, 1.0);
     particles[gl_InstanceID].color.g = mod(particles[gl_InstanceID].color.g + dt, 1.0);
     color = particle.color.rgb;
 
@@ -44,5 +49,5 @@ void main() {
     // out_color = in_color;
     // out_position = position.xyz;
 
-    gl_Position = frame.camera.view_proj * position;
+    gl_Position = proj * position;
 }

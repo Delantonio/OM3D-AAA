@@ -294,6 +294,8 @@ int main(int, char**) {
             0.0f, // luminosity
         };
     }
+    
+    glm::mat4 projection = scene_view.camera().build_projection(0.001f);
 
     for(;;) {
         glfwPollEvents();
@@ -318,6 +320,8 @@ int main(int, char**) {
         auto buf_mapping = buffer.map(AccessType::ReadWrite);
         buf_mapping[0].camera.view_proj =
             scene_view.camera().view_proj_matrix();
+        buf_mapping[0].camera.view = scene_view.camera().view_matrix();
+        buf_mapping[0].camera.proj = projection;
         buf_mapping[0].point_light_count = 0;
         buf_mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
         buf_mapping[0].sun_dir = glm::normalize(scene->sun_direction());
@@ -327,16 +331,16 @@ int main(int, char**) {
         // cube_scene_view.render();
 
         // particle_system->bind_compute();
-        // particle_system->_program_compute->bind();
+        particle_system->_program_compute->bind();
 
-        // buffer.bind(BufferUsage::Uniform, 0);
+        buffer.bind(BufferUsage::Uniform, 0);
 
-        // _particle_buffer_compute.bind(BufferUsage::Storage, 1);
+        _particle_buffer_compute.bind(BufferUsage::Storage, 1);
 
         // // Update particles  // particle_system->update(delta_time);
-        // particle_system->_program_compute->set_uniform(HASH("dt"), delta_time);
+        particle_system->_program_compute->set_uniform(HASH("dt"), delta_time);
 
-        // glDispatchCompute(128, 1, 1);
+        glDispatchCompute(128, 1, 1);
 
         // particle_system->bind_render();
         particle_system->_render_material->bind();

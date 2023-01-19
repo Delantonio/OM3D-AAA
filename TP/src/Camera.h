@@ -36,10 +36,11 @@ class Camera {
         const glm::mat4& view_proj_matrix() const;
 
         Frustum build_frustum() const;
+        glm::mat4 build_projection(float zNear);
 
     private:
         void update();
-        glm::mat4 build_projection(float zNear);
+        // glm::mat4 build_projection(float zNear);
 
         glm::mat4 _projection;
         glm::mat4 _view;
