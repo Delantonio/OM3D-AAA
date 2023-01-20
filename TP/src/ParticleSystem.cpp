@@ -54,7 +54,6 @@ void ParticleSystem::update(float dt)
     // update in compute
     // _program_compute->bind();
     _program_compute->set_uniform(HASH("dt"), dt);
-    map_particles();
     glDispatchCompute(128, 1, 1);
 }
 
@@ -74,31 +73,36 @@ void ParticleSystem::render()
     _render_material->set_cull_mode(CullMode::None);
     _render_material->set_depth_test_mode(DepthTestMode::None);
     _render_material->set_blend_mode(BlendMode::None);
-    
-    map_particles(); // map again to read updated data from compute shader
 
     _particle_vertex_buffer.bind(BufferUsage::Attribute);
     _particle_index_buffer.bind(BufferUsage::Index);
-    
+
     // Vertex position
     glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(Vertex), nullptr);
     // Vertex normal
-    glVertexAttribPointer(1, 3, GL_FLOAT, false, sizeof(Vertex), reinterpret_cast<void*>(3 * sizeof(float)));
+    // glVertexAttribPointer(1, 3, GL_FLOAT, false, sizeof(Vertex),
+    //                       reinterpret_cast<void *>(3 * sizeof(float)));
     // Vertex uv
-    glVertexAttribPointer(2, 2, GL_FLOAT, false, sizeof(Vertex), reinterpret_cast<void*>(6 * sizeof(float)));
-    // Tangent / bitangent sign
-    glVertexAttribPointer(3, 4, GL_FLOAT, false, sizeof(Vertex), reinterpret_cast<void*>(8 * sizeof(float)));
-    // Vertex color
-    glVertexAttribPointer(4, 3, GL_FLOAT, false, sizeof(Vertex), reinterpret_cast<void*>(12 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, false, sizeof(Vertex),
+                          reinterpret_cast<void *>(6 * sizeof(float)));
+    // // Tangent / bitangent sign
+    // glVertexAttribPointer(3, 4, GL_FLOAT, false, sizeof(Vertex),
+    //                       reinterpret_cast<void *>(8 * sizeof(float)));
+    // // Vertex color
+    // glVertexAttribPointer(4, 3, GL_FLOAT, false, sizeof(Vertex),
+    //                       reinterpret_cast<void *>(12 * sizeof(float)));
 
     glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
+    // glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
-    glEnableVertexAttribArray(3);
-    glEnableVertexAttribArray(4);
-    
+    // glEnableVertexAttribArray(3);
+    // glEnableVertexAttribArray(4);
+
     int instance_count = _particles.size();
-    glDrawElementsInstanced(GL_TRIANGLE_STRIP, int(_particle_index_buffer.element_count()), GL_UNSIGNED_INT, nullptr, instance_count);
+    glDrawElementsInstanced(
+        GL_TRIANGLE_STRIP,
+        int(_particle_index_buffer.element_count()),
+        GL_UNSIGNED_INT, nullptr, instance_count);
 }
 
 } // namespace OM3D

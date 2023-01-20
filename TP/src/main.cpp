@@ -246,9 +246,11 @@ int main(int, char**) {
     //     trans, glm::vec3(0.0f, 1.0f, 0.0f),
     //     glm::vec4(0.8f, 0.0f, 0.2f, 1.0f),
     //     0.1f, 0.1f, glm::vec3(0.5, 0.5, 0.0)) };
+    
+    size_t nb_particles = 1000;
         
     std::vector<Particle> particles;
-    for (size_t i = 0;  i < 25; i++)
+    for (size_t i = 0;  i < nb_particles; i++)
     {
         Particle p;
         p._color = glm::vec4(1.0f, 0.7f, 0.0f, 1.0f);
@@ -290,8 +292,20 @@ int main(int, char**) {
             };
         }
     }
-    
+
     glm::mat4 projection = scene_view.camera().build_projection(0.001f);
+    // Fill frame data buffer
+    TypedBuffer<shader::FrameData> buffer(nullptr, 1);
+    {
+        auto mapping = buffer.map(AccessType::ReadWrite);
+        mapping[0].camera.view_proj = scene_view.camera().view_proj_matrix();
+        mapping[0].camera.view = scene_view.camera().view_matrix();
+        mapping[0].camera.proj = projection;
+        mapping[0].point_light_count = 0;
+        mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
+        mapping[0].sun_dir = glm::normalize(scene->sun_direction());
+    }
+
     
     Texture x_bloom(window_size, ImageFormat::RGBA16_FLOAT);
     Texture xy_bloom(window_size, ImageFormat::RGBA16_FLOAT);
@@ -299,31 +313,6 @@ int main(int, char**) {
     Framebuffer xy_bloom_buffer(nullptr, std::array{&xy_bloom});
     auto bloom_program = Program::from_file("blur.comp");
     
-    // get gauss kernel of size 20
-    double sigma = 1;
-    constexpr int W = 20;
-    double kernel[W * W];
-    double mean = W / 2;
-    double sum = 0.0; // For accumulating the kernel values
-    for (int x = 0; x < W; ++x)
-    {
-        for (int y = 0; y < W; ++y)
-        {
-            kernel[y * W + x] = exp(-0.5
-                               * (pow((x - mean) / sigma, 2.0)
-                                  + pow((y - mean) / sigma, 2.0)))
-                / (2 * M_PI * sigma * sigma);
-
-            // Accumulate the kernel values
-            sum += kernel[y * W + x];
-        }
-    }
-
-    // Normalize the kernel
-    for (int x = 0; x < W; ++x)
-        for (int y = 0; y < W; ++y)
-            kernel[y * W + x] /= sum;
-
     for(;;) {
         glfwPollEvents();
         if(glfwWindowShouldClose(window) || glfwGetKey(window, GLFW_KEY_ESCAPE)) {
@@ -340,19 +329,10 @@ int main(int, char**) {
         // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // glClearColor(0.5f, 0.7f, 0.8f, 0.0f);
 
-        // test particle system
-        // Fill and bind frame data buffer
-        TypedBuffer<shader::FrameData> buffer(nullptr, 1);
-
+        // Update camera view in frame data buffer
         {
-            auto buf_mapping = buffer.map(AccessType::ReadWrite);
-            buf_mapping[0].camera.view_proj =
-                scene_view.camera().view_proj_matrix();
-            buf_mapping[0].camera.view = scene_view.camera().view_matrix();
-            buf_mapping[0].camera.proj = projection;
-            buf_mapping[0].point_light_count = 0;
-            buf_mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
-            buf_mapping[0].sun_dir = glm::normalize(scene->sun_direction());
+            auto mapping = buffer.map(AccessType::ReadWrite);
+            mapping[0].camera.view = scene_view.camera().view_matrix();
         }
 
         particles_framebuffer.bind();
@@ -362,98 +342,44 @@ int main(int, char**) {
         particle_system->_program_compute->bind();
 
         buffer.bind(BufferUsage::Uniform, 0);
-
         _particle_buffer_compute.bind(BufferUsage::Storage, 1);
 
-        // // Update particles  // particle_system->update(delta_time);
+        // Update particles
         particle_system->_program_compute->set_uniform(HASH("dt"), delta_time);
 
-        glDispatchCompute(25, 1, 1);
-        glMemoryBarrier(GL_ALL_BARRIER_BITS);
+        glDispatchCompute(align_up_to(nb_particles, 8) / 8, 1, 1);
 
-        // particle_system->bind_render();
-        particle_system->_render_material->bind();
-
-        // auto mapping = buffer.map(AccessType::WriteOnly);
+        // Render particles
+        particle_system->bind_render();
 
         buffer.bind(BufferUsage::Uniform, 0);
-
         _particle_buffer_compute.bind(BufferUsage::Storage, 1);
 
-        particle_system->_render_material->set_uniform(HASH("dt"), delta_time);
-        // Render particles
-        // particle_system->render();
+        particle_system->render();
 
-        particle_system->_render_material->set_cull_mode(CullMode::None);
-        particle_system->_render_material->set_depth_test_mode(
-            DepthTestMode::None);
-        particle_system->_render_material->set_blend_mode(BlendMode::None);
-
-        particle_system->_particle_vertex_buffer.bind(BufferUsage::Attribute);
-        particle_system->_particle_index_buffer.bind(BufferUsage::Index);
-
-        // Vertex position
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(Vertex), nullptr);
-        // Vertex normal
-        glVertexAttribPointer(1, 3, GL_FLOAT, false, sizeof(Vertex),
-                              reinterpret_cast<void *>(3 * sizeof(float)));
-        // Vertex uv
-        glVertexAttribPointer(2, 2, GL_FLOAT, false, sizeof(Vertex),
-                              reinterpret_cast<void *>(6 * sizeof(float)));
-        // Tangent / bitangent sign
-        glVertexAttribPointer(3, 4, GL_FLOAT, false, sizeof(Vertex),
-                              reinterpret_cast<void *>(8 * sizeof(float)));
-        // Vertex color
-        glVertexAttribPointer(4, 3, GL_FLOAT, false, sizeof(Vertex),
-                              reinterpret_cast<void *>(12 * sizeof(float)));
-
-        glEnableVertexAttribArray(0);
-        glEnableVertexAttribArray(1);
-        glEnableVertexAttribArray(2);
-        glEnableVertexAttribArray(3);
-        glEnableVertexAttribArray(4);
-
-        int instance_count = particle_system->_particles.size();
-        glDrawElementsInstanced(
-            GL_TRIANGLE_STRIP,
-            int(particle_system->_particle_index_buffer.element_count()),
-            GL_UNSIGNED_INT, nullptr, instance_count);
-
-        // scene_view.render_particles(delta_time, particle_system);
-        // particles_framebuffer.blit();
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        
-        // bloom
+        // Bloom
         bloom_program->bind();
         bloom_program->set_uniform(HASH("x_blur"), (unsigned int)true);
         particles_texture.bind(0);
         x_bloom.bind_as_image(1, AccessType::WriteOnly);
 
-        glDispatchCompute(align_up_to(window_size.x, 8),
-                          align_up_to(window_size.y, 8), 1);
-        glMemoryBarrier(GL_ALL_BARRIER_BITS);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        x_bloom_buffer.blit();
+        glDispatchCompute(align_up_to(window_size.x, 8) / 8,
+                          align_up_to(window_size.y, 8) / 8, 1);
 
         bloom_program->set_uniform(HASH("x_blur"), (unsigned int)false);
         x_bloom.bind(0);
         xy_bloom.bind_as_image(1, AccessType::WriteOnly);
 
-        glDispatchCompute(align_up_to(window_size.x, 8),
-                          align_up_to(window_size.y, 8), 1);
-        glMemoryBarrier(GL_ALL_BARRIER_BITS);
+        glDispatchCompute(align_up_to(window_size.x, 8) / 8,
+                          align_up_to(window_size.y, 8) / 8, 1);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        xy_bloom_buffer.blit();
-
-        // tonemap
-
+        // Tonemap
         tonemap_program->bind();
         xy_bloom.bind(0);
         color.bind_as_image(1, AccessType::WriteOnly);
 
-        glDispatchCompute(align_up_to(window_size.x, 8),
-                          align_up_to(window_size.y, 8), 1);
+        glDispatchCompute(align_up_to(window_size.x, 8) / 8,
+                          align_up_to(window_size.y, 8) / 8, 1);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         tonemap_framebuffer.blit();
