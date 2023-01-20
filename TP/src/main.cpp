@@ -298,6 +298,31 @@ int main(int, char**) {
     Framebuffer x_bloom_buffer(nullptr, std::array{&x_bloom});
     Framebuffer xy_bloom_buffer(nullptr, std::array{&xy_bloom});
     auto bloom_program = Program::from_file("blur.comp");
+    
+    // get gauss kernel of size 20
+    double sigma = 1;
+    constexpr int W = 20;
+    double kernel[W * W];
+    double mean = W / 2;
+    double sum = 0.0; // For accumulating the kernel values
+    for (int x = 0; x < W; ++x)
+    {
+        for (int y = 0; y < W; ++y)
+        {
+            kernel[y * W + x] = exp(-0.5
+                               * (pow((x - mean) / sigma, 2.0)
+                                  + pow((y - mean) / sigma, 2.0)))
+                / (2 * M_PI * sigma * sigma);
+
+            // Accumulate the kernel values
+            sum += kernel[y * W + x];
+        }
+    }
+
+    // Normalize the kernel
+    for (int x = 0; x < W; ++x)
+        for (int y = 0; y < W; ++y)
+            kernel[y * W + x] /= sum;
 
     for(;;) {
         glfwPollEvents();

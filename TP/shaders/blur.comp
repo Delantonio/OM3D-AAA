@@ -11,13 +11,50 @@ layout(rgba8, binding = 1) uniform writeonly image2D out_color;
 
 uniform uint x_blur = 0;
 
+// const float gauss[] = {
+//     1.02798843e-04, 1.31755659e-03, 6.08748501e-03, 1.01389764e-02,
+//     6.08748501e-03, 1.31755659e-03, 1.02798843e-04, 1.31755659e-03,
+//     1.68869153e-02, 7.80223366e-02, 1.29949664e-01, 7.80223366e-02,
+//     1.68869153e-02, 1.31755659e-03, 6.08748501e-03, 7.80223366e-02,
+//     3.60485318e-01, 6.00404295e-01, 3.60485318e-01, 7.80223366e-02,
+//     6.08748501e-03, 1.01389764e-02, 1.29949664e-01, 6.00404295e-01,
+//     1.00000000e+00, 6.00404295e-01, 1.29949664e-01, 1.01389764e-02,
+//     6.08748501e-03, 7.80223366e-02, 3.60485318e-01, 6.00404295e-01,
+//     3.60485318e-01, 7.80223366e-02, 6.08748501e-03, 1.31755659e-03,
+//     1.68869153e-02, 7.80223366e-02, 1.29949664e-01, 7.80223366e-02,
+//     1.68869153e-02, 1.31755659e-03, 1.02798843e-04, 1.31755659e-03,
+//     6.08748501e-03, 1.01389764e-02, 6.08748501e-03, 1.31755659e-03,
+//     1.02798843e-04
+// };
+
+const float gauss20[] = {
+    0.02054,
+    0.02494,
+    0.02966,
+    0.03457,
+    0.03947,
+    0.04416,
+    0.04841,
+    0.05199,
+    0.05471,
+    0.05641,
+    0.05699,
+    0.05641,
+    0.05471,
+    0.05199,
+    0.04841,
+    0.04416,
+    0.03947,
+    0.03457,
+    0.02966,
+    0.02494
+};
+
 void main() {
     const ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
     
     // get gaussian kernel
-    
-    const int kernel_size = 5;
-    const float kernel[kernel_size] = float[](0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216);
+    const int kernel_size = 20;
     
     float sum = 0.0;
     vec3 hdr = vec3(0.0);
@@ -30,8 +67,10 @@ void main() {
             const ivec2 coord2 = ivec2(coord.x + offset, coord.y);
             
             const vec3 color = sRGB_to_linear(texelFetch(in_color, coord2, 0).rgb);
-            hdr += color * kernel[i];
-            sum += kernel[i];
+            // hdr += color * kernel[i];
+            // sum += kernel[i];
+            hdr += color * gauss20[i];
+            sum += gauss20[i];
         }
     }
     else
@@ -42,8 +81,10 @@ void main() {
             const ivec2 coord2 = ivec2(coord.x, coord.y + offset);
             
             const vec3 color = sRGB_to_linear(texelFetch(in_color, coord2, 0).rgb);
-            hdr += color * kernel[i];
-            sum += kernel[i];
+            // hdr += color * kernel[i];
+            // sum += kernel[i];
+            hdr += color * gauss20[i];
+            sum += gauss20[i];
         }
     }
     
