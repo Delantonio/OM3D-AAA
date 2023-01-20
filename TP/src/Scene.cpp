@@ -168,7 +168,7 @@ void Scene::render_particles(const Camera &camera, std::shared_ptr<ParticleSyste
     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // glClearColor(0.5f, 0.7f, 0.8f, 0.0f);
 
-    particle_system->bind_compute();
+    // particle_system->bind_compute();
 
     // Fill and bind frame data buffer
     TypedBuffer<shader::FrameData> buffer(nullptr, 1);
@@ -186,7 +186,7 @@ void Scene::render_particles(const Camera &camera, std::shared_ptr<ParticleSyste
     // Update particles
     particle_system->update(dt);
     
-    particle_system->bind_render();
+    // particle_system->bind_render();
 
     {
         auto mapping = buffer.map(AccessType::WriteOnly);

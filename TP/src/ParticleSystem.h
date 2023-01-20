@@ -57,16 +57,13 @@ class ParticleSystem
 
         ParticleSystem(std::shared_ptr<Program> program_compute, std::shared_ptr<Material> material, const std::vector<Particle> &particles);
 
+        // Update the particles with compute shader
         void update(float dt);
+        // Render the particles with the render material (instanced rendering)
         void render();
-        void map_particles();
         
-        void bind_render() const;
-        void bind_compute() const;
-
-        // void add_particle(const Particle& particle);
-        // void add_particles(const std::vector<Particle>& particles);
-
+        void set_particle_texture(std::shared_ptr<Texture> texture);
+        
         void set_transform(const glm::mat4& tr);
         const glm::mat4& transform() const;
 
@@ -74,10 +71,19 @@ class ParticleSystem
     public:
         std::shared_ptr<Program> _program_compute;
         std::shared_ptr<Material> _render_material;
-        // TypedBuffer<shader::Particle> _particle_buffer_compute;
+
+        // Particle Mesh buffers (vertex and index)
         TypedBuffer<Vertex> _particle_vertex_buffer;
         TypedBuffer<u32> _particle_index_buffer;
+        
+        // CPU representation of the particles
         std::vector<Particle> _particles;
+
+        // GPU representation of the particles
+        TypedBuffer<shader::Particle> _particle_buffer_compute;
+        
+        std::shared_ptr<Texture> _particle_texture;
+        
         glm::mat4 _transform = glm::mat4(1.0f);
 };
 

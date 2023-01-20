@@ -1,5 +1,6 @@
 #include <ParticleSystem.h>
 #include <cstddef>
+#include <memory>
 #include "Camera.h"
 #include "Material.h"
 
@@ -11,9 +12,9 @@ ParticleSystem::ParticleSystem(std::shared_ptr<Program> program_compute, std::sh
     _program_compute = std::move(program_compute);
     _render_material = std::move(material);
 
-    map_particles();
     _particles = particles;
 
+    // Particle Mesh
     const std::vector<Vertex> ParticleVertex = {
         Vertex(glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 0.0, -1.0),
                glm::vec2(0.0, 0.0)),
@@ -24,55 +25,57 @@ ParticleSystem::ParticleSystem(std::shared_ptr<Program> program_compute, std::sh
         Vertex(glm::vec3(1.0, 1.0, 0.0), glm::vec3(0.0, 0.0, -1.0),
                glm::vec2(1.0, 1.0)),
     };
-
     const std::vector<u32> ParticleIndices = { 0, 1, 2, 1, 2, 3 };
+
     _particle_vertex_buffer = TypedBuffer<Vertex>(ParticleVertex);
     _particle_index_buffer = TypedBuffer<u32>(ParticleIndices);
+
+    _particle_buffer_compute = TypedBuffer<shader::Particle>(
+        nullptr, std::max(particles.size(), size_t(1)));
+
+    {
+        auto mapping = _particle_buffer_compute.map(AccessType::ReadWrite);
+        for (size_t i = 0; i != particles.size(); ++i)
+        {
+            const auto &particle = particles[i];
+            mapping[i] = {
+                particle._color,      particle._velocity, particle._duration,
+                particle._force,      particle._seed,     particle._center,
+                particle._luminosity,
+            };
+        }
+    }
+    _particle_texture = nullptr;
 }
 
-void ParticleSystem::map_particles()
+void ParticleSystem::set_particle_texture(std::shared_ptr<Texture> texture)
 {
-    // auto _particle_buffer_compute = TypedBuffer<shader::Particle>(nullptr, std::max(_particles.size(), size_t(1)));
-    // {
-    //     auto mapping = _particle_buffer_compute.map(AccessType::ReadWrite);
-    //     for (size_t i = 0; i != _particles.size(); ++i)
-    //     {
-    //         const auto &particle = _particles[i];
-    //         mapping[i] = {
-    //             particle._transform, particle._color, particle._velocity,
-    //             particle._age,       particle._force, particle._lifetime,
-    //             particle._center,
-    //             0.0f, // luminosity
-    //         };
-    //     }
-    //     _particle_buffer_compute.bind(BufferUsage::Storage, 1);
-    // }
+    _particle_texture = std::move(texture);
 }
 
 void ParticleSystem::update(float dt)
 {
-    // update in compute
-    // _program_compute->bind();
-    _program_compute->set_uniform(HASH("dt"), dt);
-    glDispatchCompute(128, 1, 1);
-}
-
-void ParticleSystem::bind_render() const
-{
-    _render_material->bind();
-}
-void ParticleSystem::bind_compute() const
-{
     _program_compute->bind();
+
+    _particle_buffer_compute.bind(BufferUsage::Storage, 1);
+
+    _program_compute->set_uniform(HASH("dt"), dt);
+    glDispatchCompute(align_up_to(_particles.size(), 8) / 8, 1, 1);
 }
 
 void ParticleSystem::render()
 {
     // draw
     // _render_material->bind();
+
+    _particle_buffer_compute.bind(BufferUsage::Storage, 1);
+    
     _render_material->set_cull_mode(CullMode::None);
     _render_material->set_depth_test_mode(DepthTestMode::None);
     _render_material->set_blend_mode(BlendMode::None);
+
+    if (_particle_texture)
+        _render_material->set_texture(HASH("particle_texture"), _particle_texture); 
 
     _particle_vertex_buffer.bind(BufferUsage::Attribute);
     _particle_index_buffer.bind(BufferUsage::Index);

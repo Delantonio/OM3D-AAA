@@ -275,23 +275,9 @@ int main(int, char**) {
     std::shared_ptr<ParticleSystem> particle_system =
         std::make_shared<ParticleSystem>(ParticleSystem(
             particles_compute_program, particles_material, particles));
+        
+    // particle_system->set_particle_texture();
 
-
-    TypedBuffer<shader::Particle> _particle_buffer_compute(
-        nullptr, std::max(particles.size(), size_t(1)));
-    
-    {
-        auto mapping = _particle_buffer_compute.map(AccessType::ReadWrite);
-        for (size_t i = 0; i != particles.size(); ++i)
-        {
-            const auto &particle = particles[i];
-            mapping[i] = {
-                particle._color,      particle._velocity, particle._duration,
-                particle._force,      particle._seed,     particle._center,
-                particle._luminosity,
-            };
-        }
-    }
 
     glm::mat4 projection = scene_view.camera().build_projection(0.001f);
     // Fill frame data buffer
@@ -329,31 +315,20 @@ int main(int, char**) {
         // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // glClearColor(0.5f, 0.7f, 0.8f, 0.0f);
 
+        particles_framebuffer.bind();
+
+        // Update particles
+        particle_system->update(delta_time); // compute shader
+
+        // Render particles
+        particle_system->_render_material->bind();
+
         // Update camera view in frame data buffer
         {
             auto mapping = buffer.map(AccessType::ReadWrite);
             mapping[0].camera.view = scene_view.camera().view_matrix();
         }
-
-        particles_framebuffer.bind();
-        // cube_scene_view.render();
-
-        // particle_system->bind_compute();
-        particle_system->_program_compute->bind();
-
         buffer.bind(BufferUsage::Uniform, 0);
-        _particle_buffer_compute.bind(BufferUsage::Storage, 1);
-
-        // Update particles
-        particle_system->_program_compute->set_uniform(HASH("dt"), delta_time);
-
-        glDispatchCompute(align_up_to(nb_particles, 8) / 8, 1, 1);
-
-        // Render particles
-        particle_system->bind_render();
-
-        buffer.bind(BufferUsage::Uniform, 0);
-        _particle_buffer_compute.bind(BufferUsage::Storage, 1);
 
         particle_system->render();
 
