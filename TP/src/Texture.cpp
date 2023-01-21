@@ -14,11 +14,19 @@ Result<TextureData> TextureData::from_file(const std::string& file) {
     int width = 0;
     int height = 0;
     int channels = 0;
+    std::cout << "Loading texture: " << file << std::endl;
     u8* img = stbi_load(file.c_str(), &width, &height, &channels, 4);
     DEFER(stbi_image_free(img));
+    std::cout << "width: " << width << " height: " << height << " channels: " << channels << std::endl;
     if(!img || width <= 0 || height <= 0 || channels <= 0) {
         return {false, {}};
     }
+
+    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     const size_t bytes = width * height * 4;
 

@@ -179,8 +179,8 @@ int main(int, char**) {
 
     ImGuiRenderer imgui(window);
 
-    std::unique_ptr<Scene> cube_scene = create_default_scene();
-    SceneView cube_scene_view(cube_scene.get());
+    // std::unique_ptr<Scene> cube_scene = create_default_scene();
+    // SceneView cube_scene_view(cube_scene.get());
     
 
     std::unique_ptr<Scene> scene = create_forest_scene();
@@ -275,9 +275,9 @@ int main(int, char**) {
     std::shared_ptr<ParticleSystem> particle_system =
         std::make_shared<ParticleSystem>(ParticleSystem(
             particles_compute_program, particles_material, particles));
-        
-    // particle_system->set_particle_texture();
-
+            
+    // Path depends on where you run the program from
+    // particle_system->texture_from_file("../../textures/white_glow_tr.tga");
 
     glm::mat4 projection = scene_view.camera().build_projection(0.001f);
     // Fill frame data buffer

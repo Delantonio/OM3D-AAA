@@ -48,9 +48,14 @@ ParticleSystem::ParticleSystem(std::shared_ptr<Program> program_compute, std::sh
     _particle_texture = nullptr;
 }
 
-void ParticleSystem::set_particle_texture(std::shared_ptr<Texture> texture)
+void ParticleSystem::texture_from_file(const std::string &texture_path)
 {
-    _particle_texture = std::move(texture);
+    Result<TextureData> texture_data = TextureData::from_file(texture_path);
+    ALWAYS_ASSERT(texture_data.is_ok, "Unable to load texture from file");
+
+    _particle_texture = std::make_shared<Texture>(std::move(texture_data.value));
+    
+    _render_material->set_texture(HASH("in_texture"), _particle_texture);
 }
 
 void ParticleSystem::update(float dt)
@@ -65,7 +70,6 @@ void ParticleSystem::update(float dt)
 
 void ParticleSystem::render()
 {
-    // draw
     // _render_material->bind();
 
     _particle_buffer_compute.bind(BufferUsage::Storage, 1);
@@ -73,9 +77,6 @@ void ParticleSystem::render()
     _render_material->set_cull_mode(CullMode::None);
     _render_material->set_depth_test_mode(DepthTestMode::None);
     _render_material->set_blend_mode(BlendMode::None);
-
-    if (_particle_texture)
-        _render_material->set_texture(HASH("particle_texture"), _particle_texture); 
 
     _particle_vertex_buffer.bind(BufferUsage::Attribute);
     _particle_index_buffer.bind(BufferUsage::Index);

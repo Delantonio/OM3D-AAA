@@ -62,7 +62,7 @@ class ParticleSystem
         // Render the particles with the render material (instanced rendering)
         void render();
         
-        void set_particle_texture(std::shared_ptr<Texture> texture);
+        void texture_from_file(const std::string &texture_path);
         
         void set_transform(const glm::mat4& tr);
         const glm::mat4& transform() const;

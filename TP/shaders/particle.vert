@@ -24,6 +24,7 @@ layout(binding = 1) buffer ParticleSSBO {
 };
 
 out vec3 color;
+out vec2 uv;
 
 void main() {
     
@@ -34,6 +35,7 @@ void main() {
 
     vec2 v = modelSpace.xy + in_pos.xy;
     color = particles[gl_InstanceID].color.rgb;
+    uv = in_uv;
 
     gl_Position = proj * vec4(v, modelSpace.z, 1.0);
 }
