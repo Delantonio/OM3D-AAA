@@ -25,10 +25,9 @@ void SceneView::render_triangle() const {
         _scene->render_triangle(_camera);
     }
 }
-// void SceneView::render_triangle(std::shared_ptr<SceneObject> light_sphere) const {
-void SceneView::render_triangle(SceneObject &light_sphere) const {
+void SceneView::render_lights(SceneObject &light_sphere) const {
     if(_scene) {
-        _scene->render_triangle(_camera, light_sphere);
+        _scene->render_lights(_camera, light_sphere);
     }
 }
 

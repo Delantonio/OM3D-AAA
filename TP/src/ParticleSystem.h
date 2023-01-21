@@ -4,6 +4,7 @@
 #include <vector>
 #include "Camera.h"
 #include "Material.h"
+#include "PointLight.h"
 #include "StaticMesh.h"
 #include "TypedBuffer.h"
 #include <vector>
@@ -16,46 +17,16 @@
 
 namespace OM3D {
     
-    
-    /*
-        b   c
-
-        a   d
-    
-    1st triangle a d b
-    2nd triangle d b c
-    triangles_strip
-    */
-
-// const float ParticleVertices[] = {
-//     0.0, 0.0, 0.0, 0.0, 0.0, // position , uv
-//     1.0, 0.0, 0.0, 1.0, 0.0, // position , uv
-//     0.0, 1.0, 0.0, 0.0, 1.0, // position , uv
-//     1.0, 1.0, 0.0, 1.0, 1.0, // position , uv
-// };
-
-
-// const MeshData ParticleMesh{ParticleVertex, ParticleIndices};
-
-
-// const float ParticleVertices[] = {
-//     0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, // position, normal, uv
-//     1.0, 0.0, 0.0, 0.0, 0.0, -1.0, 1.0, 0.0, // position, normal, uv
-//     0.0, 1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 1.0, // position, normal, uv
-//     1.0, 1.0, 0.0, 0.0, 0.0, -1.0, 1.0, 1.0, // position, normal, uv
-// };
-
-// const int ParticleIndices[] = {
-//     0, 1, 2,
-//     1, 2, 3
-// };
-
 class ParticleSystem
 {
     public:
         ParticleSystem() = default;
 
-        ParticleSystem(std::shared_ptr<Program> program_compute, std::shared_ptr<Material> material, const std::vector<Particle> &particles);
+        ParticleSystem(std::shared_ptr<Program> program_compute,
+                       std::shared_ptr<Material> material,
+                       const std::vector<Particle> &particles,
+                       const std::vector<PointLight> &lights
+                       );
 
         // Update the particles with compute shader
         void update(float dt);
@@ -81,6 +52,7 @@ class ParticleSystem
 
         // GPU representation of the particles
         TypedBuffer<shader::Particle> _particle_buffer_compute;
+        TypedBuffer<shader::PointLight> _particle_buffer_light;
         
         std::shared_ptr<Texture> _particle_texture;
         

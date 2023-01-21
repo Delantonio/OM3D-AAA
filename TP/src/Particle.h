@@ -37,4 +37,6 @@ class Particle
         float _luminosity;
         glm::vec3 _origin;
         float _age;
+        glm::vec3 _light_color;
+        float _light_radius;
 };

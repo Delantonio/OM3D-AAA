@@ -20,8 +20,8 @@ class Scene : NonMovable {
 
         void render(const Camera& camera) const;
         void render_triangle(const Camera &camera) const;
-        // void render_triangle(const Camera &camera, std::shared_ptr<SceneObject> light_sphere) const;
-        void render_triangle(const Camera &camera, SceneObject &light_sphere) const;
+        void render_lights(const Camera &camera, SceneObject &light_sphere) const;
+
         void render_particles(const Camera &camera, std::shared_ptr<ParticleSystem> particle_system, const float &dt) const;
 
         void add_object(SceneObject obj);
@@ -40,6 +40,10 @@ class Scene : NonMovable {
         glm::vec3 sun_direction() const
         {
             return _sun_direction;
+        }
+
+        std::vector<PointLight> &point_lights() {
+            return _point_lights;
         }
 
     private:

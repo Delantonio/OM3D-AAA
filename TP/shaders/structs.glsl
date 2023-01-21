@@ -11,7 +11,7 @@ struct FrameData {
     uint point_light_count;
 
     vec3 sun_color;
-    float numParticles;
+    uint numParticles;
 };
 
 struct PointLight {
@@ -19,6 +19,11 @@ struct PointLight {
     float radius;
     vec3 color;
     float padding_1;
+};
+
+struct ParticleLight {
+    vec3 color;
+    float radius;
 };
 
 struct Particle {
@@ -31,4 +36,5 @@ struct Particle {
     float luminosity;
     vec3 origin;
     float age;
+    ParticleLight light;
 };

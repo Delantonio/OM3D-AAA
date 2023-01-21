@@ -12,6 +12,10 @@ layout(binding = 1) buffer ParticleSSBO {
     Particle particles[];
 };
 
+layout(binding = 2) buffer PointLights {
+    PointLight pointLights[];
+};
+
 uniform float dt = 0.01f;
 
 float rand(vec2 co)
@@ -30,9 +34,12 @@ void main()
         //particles[index].color = vec4(1.0, 0.0, 0.0, 1.0);
     }
     
-    particles[index].color.r = (sin(particles[index].age * 5.0) / 2.0) + 0.5;
+    // particles[index].color.r = (sin(particles[index].age * 5.0) / 2.0) + 0.5;
     particles[index].luminosity =(sin(particles[index].age * 5.0) / 2.0) + 0.5;
 
     vec3 direction = vec3(sin(particles[index].age * 2.0 * particles[index].seed) * 10.0, 5.0, cos(particles[index].center.z * 2.0 * particles[index].seed) * 10.0);
     particles[index].center += direction * dt * particles[index].seed * 0.5f;
+    
+    // Set light on particle
+    pointLights[index].position = particles[index].center;
 }
