@@ -195,7 +195,8 @@ int main(int, char**) {
     
     auto debug_program = Program::from_files("debug.frag", "screen.vert");
     auto render_sun_program = Program::from_files("render_sun.frag", "screen.vert");
-    auto render_light_program = Program::from_files("render_light.frag", "basic.vert");
+    // auto render_light_program = Program::from_files("render_light.frag", "basic.vert");
+    auto render_light_screen_program = Program::from_files("render_light_screen.frag", "screen.vert");
 
 
     // Texture depth(window_size, ImageFormat::Depth32_FLOAT);
@@ -226,7 +227,10 @@ int main(int, char**) {
     auto sun_material_raw = OM3D::Material::empty_material(render_sun_program, {gcolor, gnormal, depth});
     auto sun_material = std::make_shared<Material>(sun_material_raw);
 
-    auto light_material_raw = OM3D::Material::empty_material(render_light_program, {gcolor, gnormal, depth});
+    // auto light_material_raw = OM3D::Material::empty_material(render_light_program, {gcolor, gnormal, depth});
+    // auto light_material = std::make_shared<Material>(light_material_raw);
+
+    auto light_material_raw = OM3D::Material::empty_material(render_light_screen_program, {gcolor, gnormal, depth});
     auto light_material = std::make_shared<Material>(light_material_raw);
 
     auto sphere_mesh = create_light_sphere();

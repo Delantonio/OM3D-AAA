@@ -120,31 +120,49 @@ void Scene::render_lights(const Camera &camera, SceneObject &light_sphere) const
         mapping[0].sun_dir = glm::normalize(_sun_direction);
     }
     buffer.bind(BufferUsage::Uniform, 0);
-
-    Frustum frustum = camera.build_frustum();
-
-    for (size_t i = 0; i != _point_lights.size(); ++i) {
-        const auto& light = _point_lights[i];
-        glm::mat4 transform = glm::translate(light_sphere.transform(), light.position());
-        transform = glm::scale(transform, glm::vec3(light.radius()));
-        light_sphere.set_transform(transform);
-
-        light_sphere.material()->set_cull_mode(CullMode::None);
-        light_sphere.material()->set_depth_test_mode(DepthTestMode::Reversed);
-        light_sphere.material()->set_blend_mode(BlendMode::Additive);
-
-        auto mesh = light_sphere.mesh();
-        glm::vec4 center = light_sphere.transform() * glm::vec4(mesh->bounding_sphere.center, 1.0f);
-        center -= glm::vec4(camera.position(), 0.0f);
-        
-        light_sphere.material()->set_uniform(HASH("light_position"), light.position());
-        light_sphere.material()->set_uniform(HASH("light_color"), light.color());
-        light_sphere.material()->set_uniform(HASH("light_radius"), light.radius());
-
-        if (frustum.intersect(glm::vec3(center.x, center.y, center.z), mesh->bounding_sphere.radius)) {
-            light_sphere.render();
+    
+    // Fill and bind lights buffer
+    TypedBuffer<shader::PointLight> light_buffer(nullptr, std::max(_point_lights.size(), size_t(1)));
+    {
+        auto mapping = light_buffer.map(AccessType::WriteOnly);
+        for(size_t i = 0; i != _point_lights.size(); ++i) {
+            const auto& light = _point_lights[i];
+            mapping[i] = {
+                light.position(),
+                light.radius(),
+                light.color(),
+                0.0f
+            };
         }
     }
+    light_buffer.bind(BufferUsage::Storage, 1);
+
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    // Frustum frustum = camera.build_frustum();
+
+    // for (size_t i = 0; i != _point_lights.size(); ++i) {
+    //     const auto& light = _point_lights[i];
+    //     glm::mat4 transform = glm::translate(light_sphere.transform(), light.position());
+    //     transform = glm::scale(transform, glm::vec3(light.radius()));
+    //     light_sphere.set_transform(transform);
+
+    //     light_sphere.material()->set_cull_mode(CullMode::None);
+    //     light_sphere.material()->set_depth_test_mode(DepthTestMode::Reversed);
+    //     light_sphere.material()->set_blend_mode(BlendMode::Additive);
+
+    //     auto mesh = light_sphere.mesh();
+    //     glm::vec4 center = light_sphere.transform() * glm::vec4(mesh->bounding_sphere.center, 1.0f);
+    //     center -= glm::vec4(camera.position(), 0.0f);
+        
+    //     light_sphere.material()->set_uniform(HASH("light_position"), light.position());
+    //     light_sphere.material()->set_uniform(HASH("light_color"), light.color());
+    //     light_sphere.material()->set_uniform(HASH("light_radius"), light.radius());
+
+        // if (frustum.intersect(glm::vec3(center.x, center.y, center.z), mesh->bounding_sphere.radius)) {
+        //     light_sphere.render();
+        // }
+    //}
 }
 
 }
