@@ -253,7 +253,7 @@ int main(int, char**) {
     for (size_t i = 0;  i < nb_particles; i++)
     {
         Particle p;
-        p._color = glm::vec4(1.0f, 0.7f, 0.0f, 1.0f);
+        p._color = glm::vec4(.3f, 1.0f, 0.0f, 1.0f);
         p._velocity = glm::vec3(0.0f, 1.0f, 0.0f);
         p._duration = 5.0f + (5.0f * static_cast <float> (rand()) / static_cast <float> (RAND_MAX));
         p._force = glm::vec3(0.0f, 0.0f, 0.0f);

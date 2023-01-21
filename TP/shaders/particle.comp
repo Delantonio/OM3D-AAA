@@ -30,7 +30,7 @@ void main()
         //particles[index].color = vec4(1.0, 0.0, 0.0, 1.0);
     }
     
-    particles[index].color.g = mod(particles[index].color.g + dt, 1.0);
+    particles[index].color.r = (sin(particles[index].age * 5.0) / 2.0) + 0.5;
     particles[index].luminosity = sin(particles[index].age);
 
     vec3 direction = vec3(sin(particles[index].age * 2.0 * particles[index].seed) * 10.0, 5.0, cos(particles[index].center.z * 2.0 * particles[index].seed) * 10.0);
