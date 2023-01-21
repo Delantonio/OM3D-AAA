@@ -1,4 +1,4 @@
-#include <ParticleSystem.h>
+#include "ParticleSystem.h"
 #include <cstddef>
 #include <memory>
 #include "Camera.h"
@@ -41,7 +41,7 @@ ParticleSystem::ParticleSystem(std::shared_ptr<Program> program_compute, std::sh
             mapping[i] = {
                 particle._color,      particle._velocity, particle._duration,
                 particle._force,      particle._seed,     particle._center,
-                particle._luminosity,
+                particle._luminosity, particle._origin, particle._age,
             };
         }
     }

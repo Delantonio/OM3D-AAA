@@ -22,11 +22,17 @@ float rand(vec2 co)
 void main()
 {
     uint index = gl_GlobalInvocationID.x;
+    particles[index].age -= dt;
+    if (particles[index].age < 0.0) {
+        particles[index].age = particles[index].duration;
+        particles[index].seed = rand(particles[index].center.xy + vec2(0.0, 1.0));
+        particles[index].center = particles[index].origin;
+        //particles[index].color = vec4(1.0, 0.0, 0.0, 1.0);
+    }
     
-    particles[index].center += vec3(0.0, 1.0, 0.0) * dt;
     particles[index].color.g = mod(particles[index].color.g + dt, 1.0);
-    particles[index].duration -= dt;
+    particles[index].luminosity = sin(particles[index].age);
 
-    vec3 direction = vec3(sin(particles[index].duration * 2.0 * particles[index].seed) * 10.0, 1.0, 0.0);
-    particles[index].center += direction * dt * particles[index].seed;
+    vec3 direction = vec3(sin(particles[index].age * 2.0 * particles[index].seed) * 10.0, 5.0, cos(particles[index].center.z * 2.0 * particles[index].seed) * 10.0);
+    particles[index].center += direction * dt * particles[index].seed * 0.5f;
 }

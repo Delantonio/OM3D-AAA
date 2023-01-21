@@ -247,7 +247,7 @@ int main(int, char**) {
     //     glm::vec4(0.8f, 0.0f, 0.2f, 1.0f),
     //     0.1f, 0.1f, glm::vec3(0.5, 0.5, 0.0)) };
     
-    size_t nb_particles = 1000;
+    size_t nb_particles = 100;
         
     std::vector<Particle> particles;
     for (size_t i = 0;  i < nb_particles; i++)
@@ -255,12 +255,16 @@ int main(int, char**) {
         Particle p;
         p._color = glm::vec4(1.0f, 0.7f, 0.0f, 1.0f);
         p._velocity = glm::vec3(0.0f, 1.0f, 0.0f);
-        p._duration = 1.0f;
+        p._duration = 5.0f + (5.0f * static_cast <float> (rand()) / static_cast <float> (RAND_MAX));
         p._force = glm::vec3(0.0f, 0.0f, 0.0f);
         float seed = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
         p._seed = seed;
-        p._center = glm::vec3(0.5 * i, 0.5 * i, 1.0 * i);
+        p._center = glm::vec3( 50 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+                               10 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
+                               50 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
         p._luminosity = 1.0f;
+        p._origin = p._center;
+        p._age = p._duration;
         particles.push_back(p);
     }
     

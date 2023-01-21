@@ -24,6 +24,8 @@ class Particle
             , _seed(seed)
             , _center(center)
             , _luminosity(luminosity)
+            , _origin(center)
+            , _age(10.0f)
         {}
 
         glm::vec4 _color;
@@ -33,4 +35,6 @@ class Particle
         float _seed;
         glm::vec3  _center;
         float _luminosity;
+        glm::vec3 _origin;
+        float _age;
 };

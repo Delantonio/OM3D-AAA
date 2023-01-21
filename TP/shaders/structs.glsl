@@ -29,4 +29,6 @@ struct Particle {
     float seed;
     vec3 center;
     float luminosity;
+    vec3 origin;
+    float age;
 };
