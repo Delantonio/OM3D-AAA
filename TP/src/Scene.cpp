@@ -53,10 +53,10 @@ void Scene::render(const Camera& camera) const {
 
     // Render every object
     for(const SceneObject& obj : _objects) {
-        // obj.material()->set_cull_mode(CullMode::Back);
-        // obj.material()->set_depth_test_mode(DepthTestMode::Standard);
-        obj.material()->set_cull_mode(CullMode::None);
-        obj.material()->set_depth_test_mode(DepthTestMode::None);
+        obj.material()->set_cull_mode(CullMode::Back);
+        obj.material()->set_depth_test_mode(DepthTestMode::Standard);
+        // obj.material()->set_cull_mode(CullMode::None);
+        // obj.material()->set_depth_test_mode(DepthTestMode::None);
         // obj.material()->set_blend_mode(BlendMode::Alpha);
         auto mesh = obj.mesh();
         glm::vec4 center = obj.transform() * glm::vec4(mesh->bounding_sphere.center, 1.0f);

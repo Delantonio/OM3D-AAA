@@ -158,6 +158,32 @@ std::unique_ptr<Scene> create_forest_scene() {
     return scene;
 }
 
+std::unique_ptr<Scene> create_bistro_scene() {
+    auto scene = std::make_unique<Scene>();
+
+    auto result = Scene::from_gltf(std::string(data_path) + "bistro.glb");
+    ALWAYS_ASSERT(result.is_ok, "Unable to load default scene");
+    scene = std::move(result.value);
+
+    // Add lights
+    {
+        PointLight light;
+        light.set_position(glm::vec3(1.0f, 2.0f, 4.0f));
+        light.set_color(glm::vec3(0.0f, 255.0f, 0.0f));
+        light.set_radius(100.0f);
+        scene->add_object(std::move(light));
+    }
+    {
+        PointLight light;
+        light.set_position(glm::vec3(10.0f, 2.0f, -4.0f));
+        light.set_color(glm::vec3(255.0f, 0.0f, 0.0f));
+        light.set_radius(50.0f);
+        scene->add_object(std::move(light));
+    }
+
+    return scene;
+}
+
 
 int main(int, char**) {
     DEBUG_ASSERT([] { std::cout << "Debug asserts enabled" << std::endl; return true; }());
@@ -186,6 +212,9 @@ int main(int, char**) {
     std::unique_ptr<Scene> scene = create_forest_scene();
     SceneView scene_view(scene.get());
     
+    // std::unique_ptr<Scene> scene = create_bistro_scene();
+    // SceneView scene_view(scene.get());
+    
     // Set the camera for the forest scene
     // glm::mat4 view = glm::lookAt(glm::vec3(50.0f, 75.0f, 150.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     // scene_view.camera().set_view(view);
@@ -196,6 +225,9 @@ int main(int, char**) {
 
     auto tonemap_program = Program::from_file("tonemap.comp");
     
+    
+    auto basic_program = Program::from_files("lit.frag", "basic.vert");
+
     auto debug_program = Program::from_files("debug.frag", "screen.vert");
     auto render_program = Program::from_files("render.frag", "screen.vert");
 
@@ -203,7 +235,7 @@ int main(int, char**) {
     // Texture depth(window_size, ImageFormat::Depth32_FLOAT);
     // Texture lit(window_size, ImageFormat::RGBA16_FLOAT);
     Texture color(window_size, ImageFormat::RGBA8_UNORM);
-    // Framebuffer main_framebuffer(&depth, std::array{&lit});
+    // Framebuffer main_framebuffer(nullptr, std::array{&lit});
     // Framebuffer tonemap_framebuffer(nullptr, std::array{&color});
 
     // Texture gcolor(window_size, ImageFormat::RGBA8_sRGB);
@@ -320,6 +352,10 @@ int main(int, char**) {
         // glClearColor(0.5f, 0.7f, 0.8f, 0.0f);
 
         particles_framebuffer.bind();
+        
+        // Render scene
+        basic_program->bind();
+        scene_view.render();
 
         // Update particles
         particle_system->update(delta_time); // compute shader
