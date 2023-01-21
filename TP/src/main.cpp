@@ -139,16 +139,16 @@ std::unique_ptr<Scene> create_forest_scene() {
     // Add lights
     {
         PointLight light;
-        light.set_position(glm::vec3(1.0f, 2.0f, 4.0f));
+        light.set_position(glm::vec3(-13.0f, 6.0f, 2.0f));
         light.set_color(glm::vec3(0.0f, 255.0f, 0.0f));
-        light.set_radius(100.0f);
+        light.set_radius(1000.0f);
         scene->add_object(std::move(light));
     }
     {
         PointLight light;
-        light.set_position(glm::vec3(10.0f, 2.0f, -4.0f));
+        light.set_position(glm::vec3(50.0f, 75.0f, 150.0f));
         light.set_color(glm::vec3(255.0f, 0.0f, 0.0f));
-        light.set_radius(50.0f);
+        light.set_radius(500.0f);
         scene->add_object(std::move(light));
     }
 
@@ -186,11 +186,16 @@ int main(int, char**) {
     // Set the camera for the forest scene
     glm::mat4 view = glm::lookAt(glm::vec3(50.0f, 75.0f, 150.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     scene_view.camera().set_view(view);
+    
+    // glm::mat4 view = glm::lookAt(glm::vec3(-13.0f, 6.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    // scene_view.camera().set_view(view);
+    
 
     auto tonemap_program = Program::from_file("tonemap.comp");
     
     auto debug_program = Program::from_files("debug.frag", "screen.vert");
-    auto render_program = Program::from_files("render.frag", "screen.vert");
+    auto render_sun_program = Program::from_files("render_sun.frag", "screen.vert");
+    auto render_light_program = Program::from_files("render_light.frag", "basic.vert");
 
 
     // Texture depth(window_size, ImageFormat::Depth32_FLOAT);
@@ -218,19 +223,26 @@ int main(int, char**) {
     auto debug_normal = OM3D::Material::empty_material(debug_program, {gnormal});
     auto debug_depth = OM3D::Material::empty_material(debug_program, {depth});
 
-    auto render_material_raw = OM3D::Material::empty_material(render_program, {gcolor, gnormal, depth});
-    auto render_material = std::make_shared<Material>(render_material_raw);
+    auto sun_material_raw = OM3D::Material::empty_material(render_sun_program, {gcolor, gnormal, depth});
+    auto sun_material = std::make_shared<Material>(sun_material_raw);
+
+    auto light_material_raw = OM3D::Material::empty_material(render_light_program, {gcolor, gnormal, depth});
+    auto light_material = std::make_shared<Material>(light_material_raw);
 
     auto sphere_mesh = create_light_sphere();
     // auto sphere_material = std::make_shared<Material>(Material::empty_material(render_program, {}));
     // auto sphere = std::make_shared<SceneObject>(sphere_mesh, sphere_material);
-    auto sphere = std::make_shared<SceneObject>(sphere_mesh, render_material);
+    auto sphere = std::make_shared<SceneObject>(sphere_mesh, light_material);
             
     debug_color.set_cull_mode(CullMode::None);
     debug_normal.set_cull_mode(CullMode::None);
     debug_depth.set_cull_mode(CullMode::None);
     
-    render_material->set_cull_mode(CullMode::None);
+    sun_material->set_cull_mode(CullMode::None);
+    sun_material->set_blend_mode(BlendMode::Alpha);
+    
+    light_material->set_cull_mode(CullMode::None);
+    light_material->set_blend_mode(BlendMode::Additive);
     // render_material.set_blend_mode(BlendMode::Additive);
 
     for(;;) {
@@ -244,7 +256,7 @@ int main(int, char**) {
         if(const auto& io = ImGui::GetIO(); !io.WantCaptureMouse && !io.WantCaptureKeyboard) {
             process_inputs(window, scene_view.camera());
         }
-
+    
         // Render the scene
         {
             // main_framebuffer.bind();
@@ -291,16 +303,18 @@ int main(int, char**) {
         }
         else {
             renderbuffer.bind();
-            render_material->bind();
-            scene_view.render_triangle(*sphere.get());
-            // scene_view.render_triangle();
+            sun_material->bind();
+            scene_view.render_triangle();
+            // osef de ce bind material ici, il est fait dans render_lights
+            light_material->bind();
+            scene_view.render_lights(*sphere.get());
 
             // Apply a tonemap in compute shader
             tonemap_program->bind();
             glit.bind(0);
             color.bind_as_image(1, AccessType::WriteOnly);
             
-            glDispatchCompute(align_up_to(window_size.x, 8), align_up_to(window_size.y, 8), 1);
+            glDispatchCompute(align_up_to(window_size.x, 8) / 8, align_up_to(window_size.y, 8) / 8, 1);
 
             // Blit tonemap result to screen
             glBindFramebuffer(GL_FRAMEBUFFER, 0);

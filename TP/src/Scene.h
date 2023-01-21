@@ -20,7 +20,7 @@ class Scene : NonMovable {
         void render(const Camera& camera) const;
         void render_triangle(const Camera &camera) const;
         // void render_triangle(const Camera &camera, std::shared_ptr<SceneObject> light_sphere) const;
-        void render_triangle(const Camera &camera, SceneObject &light_sphere) const;
+        void render_lights(const Camera &camera, SceneObject &light_sphere) const;
 
         void add_object(SceneObject obj);
         void add_object(PointLight obj);

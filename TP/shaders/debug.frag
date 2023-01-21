@@ -19,7 +19,7 @@ void main()
     vec4 color = texelFetch(in_texture, ivec2(gl_FragCoord.xy), 0);
     if (depth != 0)
     {
-        color.r *= 1e6;
+        color.r *= 5e4;
         color.gb = vec2(color.r);
     }
     out_color = vec4(color.rgb, 1.0);

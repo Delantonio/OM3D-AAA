@@ -123,7 +123,7 @@ static void link_program(GLuint handle) {
 Program::Program(const std::string& frag, const std::string& vert) : _handle(glCreateProgram()) {
     const GLuint vert_handle = create_shader(vert, GL_VERTEX_SHADER);
     const GLuint frag_handle = create_shader(frag, GL_FRAGMENT_SHADER);
-
+    
     glAttachShader(_handle.get(), vert_handle);
     glAttachShader(_handle.get(), frag_handle);
 
