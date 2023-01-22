@@ -99,7 +99,7 @@ ParticleSystem::ParticleSystem( glm::vec3 center,
             PointLight light;
             light.set_position(glm::vec3(p._center));
             light.set_color(glm::vec3(255.0f, 255.0f, 0.0f));
-            light.set_radius(3.0f);
+            light.set_radius(1.0f);
             //scene->add_object(std::move(light));
             lights.push_back(std::move(light));
         }
