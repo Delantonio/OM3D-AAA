@@ -28,6 +28,10 @@ class ParticleSystem
                        const std::vector<PointLight> &lights
                        );
 
+        ParticleSystem(glm::vec3 center,
+                       glm::vec3 size,
+                       float number_of_particles,
+                       glm::vec2 window_size);
         // Update the particles with compute shader
         void update(float dt);
         // Render the particles with the render material (instanced rendering)
@@ -37,6 +41,8 @@ class ParticleSystem
         
         void set_transform(const glm::mat4& tr);
         const glm::mat4& transform() const;
+
+        std::vector<PointLight> lights;
 
     // private:
     public:

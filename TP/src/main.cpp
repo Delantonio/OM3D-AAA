@@ -275,7 +275,7 @@ int main(int, char**) {
     light_material->set_cull_mode(CullMode::None);
     light_material->set_blend_mode(BlendMode::Additive);
     
-    size_t nb_particles = 100;
+    /*size_t nb_particles = 100;
         
     std::vector<Particle> particles;
     for (size_t i = 0;  i < nb_particles; i++)
@@ -316,8 +316,17 @@ int main(int, char**) {
     
     std::shared_ptr<ParticleSystem> particle_system =
         std::make_shared<ParticleSystem>(ParticleSystem(
-            particles_compute_program, particles_material, particles, scene->point_lights()));
-            
+            particles_compute_program, particles_material, particles, scene->point_lights()));*/
+
+    size_t nb_particles = 300;
+    std::shared_ptr<ParticleSystem> particle_system =
+        std::make_shared<ParticleSystem>(ParticleSystem(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(200, 25, 200), nb_particles, window_size));
+
+    for (PointLight &l : particle_system->lights)
+    {
+        scene->add_object(std::move(l));
+    }
+
     // Path depends on where you run the program from
     // particle_system->texture_from_file("../../textures/white_glow_tr.tga");
 
