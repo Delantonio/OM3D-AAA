@@ -193,6 +193,7 @@ void Scene::render_particles(const Camera &camera, std::shared_ptr<ParticleSyste
     // Update particles
     particle_system->update(dt);
     
+    particle_system->_render_material->bind();
     buffer.bind(BufferUsage::Uniform, 0);
 
     // Render particles

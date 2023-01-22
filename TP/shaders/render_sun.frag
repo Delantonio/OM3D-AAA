@@ -5,6 +5,7 @@
 layout(location = 0) in vec2 in_uv;
 
 layout(location = 0) out vec4 out_color;
+layout(location = 1) out vec4 bright;
 
 layout(binding = 0) uniform sampler2D in_texture;
 layout(binding = 1) uniform sampler2D in_normal_texture;
@@ -33,4 +34,5 @@ void main()
     
     vec4 color = texelFetch(in_texture, ivec2(gl_FragCoord.xy), 0);
     out_color = vec4(color.rgb * acc, 1.0);
+    bright = vec4(ambient, 1.0);
 }

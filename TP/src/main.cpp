@@ -65,6 +65,13 @@ void process_inputs(GLFWwindow* window, Camera& camera) {
         if(glfwGetKey(window, 'A') == GLFW_PRESS) {
             movement -= camera.right();
         }
+        
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+            movement += camera.up();
+        }
+        if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
+            movement -= camera.up();
+        }
 
         float speed = 10.0f;
         if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
@@ -238,7 +245,7 @@ int main(int, char**) {
     Texture color(window_size, ImageFormat::RGBA8_UNORM);
 
     auto depth = std::make_shared<Texture>(window_size, ImageFormat::Depth32_FLOAT);
-    auto gcolor = std::make_shared<Texture>(window_size, ImageFormat::RGBA8_sRGB);
+    auto gcolor = std::make_shared<Texture>(window_size, ImageFormat::RGBA8_UNORM);
     auto gnormal = std::make_shared<Texture>(window_size, ImageFormat::RGBA8_UNORM);
 
     Texture glit(window_size, ImageFormat::RGBA16_FLOAT);
@@ -364,10 +371,6 @@ int main(int, char**) {
             process_inputs(window, scene_view.camera());
         }
 
-        // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // glClearColor(0.5f, 0.7f, 0.8f, 0.0f);
-        
-        
         // Render the scene
         {
             // bind gbuffer
@@ -376,24 +379,8 @@ int main(int, char**) {
             // use gbuffer shader
             scene_view.render();
             
-            // scene_view.render_particles(delta_time, particle_system);
+            scene_view.render_particles(delta_time, particle_system);
 
-            // Update particles
-            particle_system->update(delta_time); // compute shader
-
-            // Render particles
-            particle_system->_render_material->bind();
-
-            // Update camera view in frame data buffer
-            {
-                auto mapping = buffer.map(AccessType::ReadWrite);
-                mapping[0].camera.view = scene_view.camera().view_matrix();
-            }
-            buffer.bind(BufferUsage::Uniform, 0);
-
-            particle_system->render();
-
-            // unbind gbuffer
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
 
@@ -406,6 +393,7 @@ int main(int, char**) {
 
             tonemap_program->bind();
             glit.bind(0);
+            glit.bind(1);
             color.bind_as_image(1, AccessType::WriteOnly);
             
             glDispatchCompute(align_up_to(window_size.x, 8) / 8, align_up_to(window_size.y, 8) / 8, 1);
@@ -428,6 +416,7 @@ int main(int, char**) {
         else {
             glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // To have black background when getting bright colors only
             renderbuffer.bind();
+            glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // To have black background when getting bright colors only
             sun_material->bind();
             scene_view.render_triangle();
 
@@ -450,20 +439,25 @@ int main(int, char**) {
 
             glDispatchCompute(align_up_to(window_size.x, 8) / 8,
                               align_up_to(window_size.y, 8) / 8, 1);
+            
+            uint blur_pass_bonus = 1;
+            for (uint i = 0; i < blur_pass_bonus; i++)
+            {
+                bloom_program->set_uniform(HASH("x_blur"), (unsigned int)true);
+                xy_bloom.bind(0);
+                x_bloom.bind_as_image(1, AccessType::WriteOnly);
 
-            bloom_program->set_uniform(HASH("x_blur"), (unsigned int)true);
-            xy_bloom.bind(0);
-            x_bloom.bind_as_image(1, AccessType::WriteOnly);
+                glDispatchCompute(align_up_to(window_size.x, 8) / 8,
+                                  align_up_to(window_size.y, 8) / 8, 1);
 
-            glDispatchCompute(align_up_to(window_size.x, 8) / 8,
-                              align_up_to(window_size.y, 8) / 8, 1);
+                bloom_program->set_uniform(HASH("x_blur"), (unsigned int)false);
+                x_bloom.bind(0);
+                xy_bloom.bind_as_image(1, AccessType::WriteOnly);
 
-            bloom_program->set_uniform(HASH("x_blur"), (unsigned int)false);
-            x_bloom.bind(0);
-            xy_bloom.bind_as_image(1, AccessType::WriteOnly);
+                glDispatchCompute(align_up_to(window_size.x, 8) / 8,
+                                  align_up_to(window_size.y, 8) / 8, 1);
+            }
 
-            glDispatchCompute(align_up_to(window_size.x, 8) / 8,
-                              align_up_to(window_size.y, 8) / 8, 1);
 
             // Tonemap
             tonemap_program->bind();
