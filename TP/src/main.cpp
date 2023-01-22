@@ -209,7 +209,7 @@ int main(int, char**) {
     // Texture gnormal(window_size, ImageFormat::RGBA8_UNORM);
 
     auto depth = std::make_shared<Texture>(window_size, ImageFormat::Depth32_FLOAT);
-    auto gcolor = std::make_shared<Texture>(window_size, ImageFormat::RGBA8_sRGB);
+    auto gcolor = std::make_shared<Texture>(window_size, ImageFormat::RGBA8_UNORM);
     auto gnormal = std::make_shared<Texture>(window_size, ImageFormat::RGBA8_UNORM);
     Texture glit(window_size, ImageFormat::RGBA16_FLOAT);
     Framebuffer gbuffer(depth.get(), std::array{gcolor.get(), gnormal.get()});
@@ -279,19 +279,9 @@ int main(int, char**) {
         
         if(gui_albedo)
         {
-            renderbuffer.bind();
             debug_color.bind();
             debug_program->set_uniform("depth", (unsigned int)false);
             scene_view.render_triangle();
-
-            tonemap_program->bind();
-            glit.bind(0);
-            color.bind_as_image(1, AccessType::WriteOnly);
-            
-            glDispatchCompute(align_up_to(window_size.x, 8), align_up_to(window_size.y, 8), 1);
-
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            tonemap_framebuffer.blit();
         }
         else if(gui_normal)
         {
