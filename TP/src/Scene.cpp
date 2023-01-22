@@ -177,11 +177,14 @@ void Scene::render_particles(const Camera &camera, std::shared_ptr<ParticleSyste
     // Fill and bind frame data buffer
     TypedBuffer<shader::FrameData> buffer(nullptr, 1);
     {
-        auto mapping = buffer.map(AccessType::WriteOnly);
+        auto mapping = buffer.map(AccessType::ReadWrite);
         mapping[0].camera.view_proj = camera.view_proj_matrix();
-        mapping[0].point_light_count = u32(_point_lights.size());
+        mapping[0].camera.view = camera.view_matrix();
+        mapping[0].camera.proj = camera.projection_matrix();
+        mapping[0].point_light_count = 0;
         mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
         mapping[0].sun_dir = glm::normalize(_sun_direction);
+        mapping[0].numParticles = particle_system->_particle_buffer_compute.element_count();
     }
     buffer.bind(BufferUsage::Uniform, 0);
     
@@ -190,15 +193,6 @@ void Scene::render_particles(const Camera &camera, std::shared_ptr<ParticleSyste
     // Update particles
     particle_system->update(dt);
     
-    // particle_system->bind_render();
-
-    {
-        auto mapping = buffer.map(AccessType::WriteOnly);
-        mapping[0].camera.view_proj = camera.view_proj_matrix();
-        mapping[0].point_light_count = u32(_point_lights.size());
-        mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
-        mapping[0].sun_dir = glm::normalize(_sun_direction);
-    }
     buffer.bind(BufferUsage::Uniform, 0);
 
     // Render particles

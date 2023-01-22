@@ -240,10 +240,12 @@ int main(int, char**) {
     auto depth = std::make_shared<Texture>(window_size, ImageFormat::Depth32_FLOAT);
     auto gcolor = std::make_shared<Texture>(window_size, ImageFormat::RGBA8_sRGB);
     auto gnormal = std::make_shared<Texture>(window_size, ImageFormat::RGBA8_UNORM);
+
     Texture glit(window_size, ImageFormat::RGBA16_FLOAT);
+    Texture bright(window_size, ImageFormat::RGBA16_FLOAT);
 
     Framebuffer gbuffer(depth.get(), std::array{gcolor.get(), gnormal.get()});
-    Framebuffer renderbuffer(nullptr, std::array{&glit});
+    Framebuffer renderbuffer(nullptr, std::array{&glit, &bright});
     Framebuffer tonemap_framebuffer(nullptr, std::array{&color});
 
     bool gui_albedo = false;
@@ -299,7 +301,7 @@ int main(int, char**) {
             PointLight light;
             light.set_position(glm::vec3(p._center));
             light.set_color(glm::vec3(255.0f, 255.0f, 0.0f));
-            light.set_radius(2.0f);
+            light.set_radius(3.0f);
             scene->add_object(std::move(light));
         }
     }
@@ -364,6 +366,8 @@ int main(int, char**) {
 
             // use gbuffer shader
             scene_view.render();
+            
+            // scene_view.render_particles(delta_time, particle_system);
 
             // Update particles
             particle_system->update(delta_time); // compute shader
@@ -413,35 +417,50 @@ int main(int, char**) {
             scene_view.render_triangle();
         }
         else {
+            glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // To have black background when getting bright colors only
             renderbuffer.bind();
             sun_material->bind();
             scene_view.render_triangle();
 
             light_material->bind();
-            buffer.bind(BufferUsage::Uniform, 0);
             particle_system->_particle_buffer_light.bind(BufferUsage::Storage, 2);
             scene_view.render_lights(*sphere.get());
 
             // Bloom
-            // bloom_program->bind();
-            // bloom_program->set_uniform(HASH("x_blur"), (unsigned int)true);
-            // particles_texture.bind(0);
-            // x_bloom.bind_as_image(1, AccessType::WriteOnly);
+            bloom_program->bind();
+            bloom_program->set_uniform(HASH("x_blur"), (unsigned int)true);
+            bright.bind(0);
+            x_bloom.bind_as_image(1, AccessType::WriteOnly);
 
-            // glDispatchCompute(align_up_to(window_size.x, 8) / 8,
-            //                   align_up_to(window_size.y, 8) / 8, 1);
+            glDispatchCompute(align_up_to(window_size.x, 8) / 8,
+                              align_up_to(window_size.y, 8) / 8, 1);
 
-            // bloom_program->set_uniform(HASH("x_blur"), (unsigned int)false);
-            // x_bloom.bind(0);
-            // xy_bloom.bind_as_image(1, AccessType::WriteOnly);
+            bloom_program->set_uniform(HASH("x_blur"), (unsigned int)false);
+            x_bloom.bind(0);
+            xy_bloom.bind_as_image(1, AccessType::WriteOnly);
 
-            // glDispatchCompute(align_up_to(window_size.x, 8) / 8,
-            //                   align_up_to(window_size.y, 8) / 8, 1);
+            glDispatchCompute(align_up_to(window_size.x, 8) / 8,
+                              align_up_to(window_size.y, 8) / 8, 1);
+
+            bloom_program->set_uniform(HASH("x_blur"), (unsigned int)true);
+            xy_bloom.bind(0);
+            x_bloom.bind_as_image(1, AccessType::WriteOnly);
+
+            glDispatchCompute(align_up_to(window_size.x, 8) / 8,
+                              align_up_to(window_size.y, 8) / 8, 1);
+
+            bloom_program->set_uniform(HASH("x_blur"), (unsigned int)false);
+            x_bloom.bind(0);
+            xy_bloom.bind_as_image(1, AccessType::WriteOnly);
+
+            glDispatchCompute(align_up_to(window_size.x, 8) / 8,
+                              align_up_to(window_size.y, 8) / 8, 1);
 
             // Tonemap
             tonemap_program->bind();
             // xy_bloom.bind(0);
             glit.bind(0);
+            xy_bloom.bind(1);
             color.bind_as_image(1, AccessType::WriteOnly);
 
             glDispatchCompute(align_up_to(window_size.x, 8) / 8,

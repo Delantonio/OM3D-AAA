@@ -3,7 +3,9 @@
 #include "utils.glsl"
 
 layout(location = 0) in vec2 in_uv;
+
 layout(location = 0) out vec4 out_color;
+layout(location = 1) out vec4 bright;
 
 layout(binding = 0) uniform sampler2D in_texture;
 layout(binding = 1) uniform sampler2D in_normal_texture;
@@ -48,6 +50,9 @@ void main()
         }
         acc += light.color * (NoL * att);
     }
-    // vec4 color = texelFetch(in_texture, ivec2(gl_FragCoord.xy), 0);
     out_color = vec4(acc, 1.0);
+    bright = vec4(ambient, 1.0);
+    float brightness = dot(acc, vec3(0.2126, 0.7152, 0.0722));
+    if (brightness > 1.0)
+        bright = out_color;
 }
