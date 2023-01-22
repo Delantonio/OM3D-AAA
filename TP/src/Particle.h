@@ -15,15 +15,12 @@ class Particle
         // {}
 
         Particle(glm::vec4 color, glm::vec3 velocity,
-                 float duration, glm::vec3 force, float seed, glm::vec3 center,
-                 float luminosity)
+                 float duration, float seed, glm::vec3 center)
             : _color(color)
             , _velocity(velocity)
             , _duration(duration)
-            , _force(force)
-            , _seed(seed)
             , _center(center)
-            , _luminosity(luminosity)
+            , _seed(seed)
             , _origin(center)
             , _age(10.0f)
         {}
@@ -31,12 +28,8 @@ class Particle
         glm::vec4 _color;
         glm::vec3 _velocity;
         float _duration;
-        glm::vec3 _force;
-        float _seed;
         glm::vec3  _center;
-        float _luminosity;
+        float _seed;
         glm::vec3 _origin;
         float _age;
-        glm::vec3 _light_color;
-        float _light_radius;
 };

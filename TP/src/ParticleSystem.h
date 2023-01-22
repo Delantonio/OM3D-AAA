@@ -33,7 +33,7 @@ class ParticleSystem
                        float number_of_particles,
                        glm::vec2 window_size);
         // Update the particles with compute shader
-        void update(float dt);
+        void update(const float &dt, const bool &gui_lit);
         // Render the particles with the render material (instanced rendering)
         void render();
         

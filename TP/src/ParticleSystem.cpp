@@ -46,14 +46,10 @@ namespace OM3D {
                 mapping[i].color = particle._color;
                 mapping[i].velocity = particle._velocity;
                 mapping[i].duration = particle._duration;
-                mapping[i].force = particle._force;
-                mapping[i].seed = particle._seed;
                 mapping[i].center = particle._center;
-                mapping[i].luminosity = particle._luminosity;
+                mapping[i].seed = particle._seed;
                 mapping[i].origin = particle._origin;
                 mapping[i].age = particle._age;
-                mapping[i].light.color = particle._light_color;
-                mapping[i].light.radius = particle._light_radius;
             }
         }
         // Fill and bind lights buffer
@@ -82,25 +78,20 @@ ParticleSystem::ParticleSystem( glm::vec3 center,
         p._color = glm::vec4(.3f, 1.0f, 0.0f, 1.0f);
         p._velocity = glm::vec3(0.0f, 1.0f, 0.0f);
         p._duration = 5.0f + (25.0f * static_cast <float> (rand()) / static_cast <float> (RAND_MAX));
-        p._force = glm::vec3(0.0f, 0.0f, 0.0f);
         float seed = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
         p._seed = seed;
         p._center = center + glm::vec3( size.x * (static_cast<float>(rand()) / static_cast<float>(RAND_MAX) - 0.5),
                                size.y * (static_cast<float>(rand()) / static_cast<float>(RAND_MAX) - 0.5),
                                size.z * (static_cast<float>(rand()) / static_cast<float>(RAND_MAX) - 0.5) );
-        p._luminosity = 1.0f;
         p._origin = p._center;
         p._age = p._duration;
-        p._light_color = glm::vec3(255.0f, 255.0f, 0.0f);
-        p._light_radius = 100.0f;
         _particles.push_back(p);
         
         {
             PointLight light;
             light.set_position(glm::vec3(p._center));
-            light.set_color(glm::vec3(255.0f, 255.0f, 0.0f));
-            light.set_radius(1.0f);
-            //scene->add_object(std::move(light));
+            light.set_color(glm::vec3(10.0f, 20.0f, 0.0f));
+            light.set_radius(2.0f);
             lights.push_back(std::move(light));
         }
     }
@@ -116,13 +107,13 @@ ParticleSystem::ParticleSystem( glm::vec3 center,
 
     // Particle Mesh
     const std::vector<Vertex> ParticleVertex = {
-        Vertex(glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 0.0, -1.0),
+        Vertex(glm::vec3(-0.5, -0.5, 0.0), glm::vec3(0.0, 0.0, -1.0),
                 glm::vec2(0.0, 0.0)),
-        Vertex(glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, 0.0, -1.0),
+        Vertex(glm::vec3(0.5, -0.5, 0.0), glm::vec3(0.0, 0.0, -1.0),
                 glm::vec2(1.0, 0.0)),
-        Vertex(glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, -1.0),
+        Vertex(glm::vec3(-0.5, 0.5, 0.0), glm::vec3(0.0, 0.0, -1.0),
                 glm::vec2(0.0, 1.0)),
-        Vertex(glm::vec3(1.0, 1.0, 0.0), glm::vec3(0.0, 0.0, -1.0),
+        Vertex(glm::vec3(0.5, 0.5, 0.0), glm::vec3(0.0, 0.0, -1.0),
                 glm::vec2(1.0, 1.0)),
     };
     const std::vector<u32> ParticleIndices = { 0, 1, 2, 1, 2, 3 };
@@ -132,7 +123,6 @@ ParticleSystem::ParticleSystem( glm::vec3 center,
 
     _particle_buffer_compute = TypedBuffer<shader::Particle>(
         nullptr, std::max(_particles.size(), size_t(1)));
-
     {
         auto mapping = _particle_buffer_compute.map(AccessType::ReadWrite);
         for (size_t i = 0; i != _particles.size(); ++i)
@@ -141,10 +131,8 @@ ParticleSystem::ParticleSystem( glm::vec3 center,
             mapping[i].color = particle._color;
             mapping[i].velocity = particle._velocity;
             mapping[i].duration = particle._duration;
-            mapping[i].force = particle._force;
-            mapping[i].seed = particle._seed;
             mapping[i].center = particle._center;
-            mapping[i].luminosity = particle._luminosity;
+            mapping[i].seed = particle._seed;
             mapping[i].origin = particle._origin;
             mapping[i].age = particle._age;
         }
@@ -174,14 +162,14 @@ void ParticleSystem::texture_from_file(const std::string &texture_path)
     _render_material->set_texture(HASH("in_texture"), _particle_texture);
 }
 
-void ParticleSystem::update(float dt)
+void ParticleSystem::update(const float &dt, const bool &gui_lit)
 {
     _program_compute->bind();
 
     _particle_buffer_compute.bind(BufferUsage::Storage, 1);
-
     _particle_buffer_light.bind(BufferUsage::Storage, 2);
 
+    _program_compute->set_uniform(HASH("all_lit"), (unsigned int)gui_lit);
     _program_compute->set_uniform(HASH("dt"), dt);
     glDispatchCompute(align_up_to(_particles.size(), 8) / 8, 1, 1);
 }

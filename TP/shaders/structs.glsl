@@ -18,23 +18,15 @@ struct PointLight {
     vec3 position;
     float radius;
     vec3 color;
-    float padding_1;
-};
-
-struct ParticleLight {
-    vec3 color;
-    float radius;
+    float luminosity;
 };
 
 struct Particle {
     vec4 color;
     vec3 velocity;
     float duration;
-    vec3 force;
-    float seed;
     vec3 center;
-    float luminosity;
+    float seed;
     vec3 origin;
     float age;
-    ParticleLight light;
 };

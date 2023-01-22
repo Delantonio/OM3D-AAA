@@ -142,7 +142,7 @@ std::shared_ptr<StaticMesh> create_light_sphere() {
 std::unique_ptr<Scene> create_forest_scene() {
     auto scene = std::make_unique<Scene>();
 
-    auto result = Scene::from_gltf(std::string(data_path) + "forest.glb");
+    auto result = Scene::from_gltf(std::string(data_path) + "forest_big.glb");
     ALWAYS_ASSERT(result.is_ok, "Unable to load default scene");
     scene = std::move(result.value);
 
@@ -223,7 +223,7 @@ int main(int, char**) {
     // SceneView scene_view(scene.get());
     
     // Set the camera for the forest scene
-    glm::mat4 view = glm::lookAt(glm::vec3(50.0f, 75.0f, 150.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    glm::mat4 view = glm::lookAt(glm::vec3(50.0f, 30.0f, 150.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     scene_view.camera().set_view(view);
     //
     // Set the camera for the particles scene
@@ -258,6 +258,7 @@ int main(int, char**) {
     bool gui_albedo = false;
     bool gui_normal = false;
     bool gui_depth = false;
+    bool gui_lit = false;
     
     auto debug_color = OM3D::Material::empty_material(debug_program, {gcolor});
     auto debug_normal = OM3D::Material::empty_material(debug_program, {gnormal});
@@ -282,52 +283,9 @@ int main(int, char**) {
     light_material->set_cull_mode(CullMode::None);
     light_material->set_blend_mode(BlendMode::Additive);
     
-    /*size_t nb_particles = 100;
-        
-    std::vector<Particle> particles;
-    for (size_t i = 0;  i < nb_particles; i++)
-    {
-        Particle p;
-        p._color = glm::vec4(.3f, 1.0f, 0.0f, 1.0f);
-        p._velocity = glm::vec3(0.0f, 1.0f, 0.0f);
-        p._duration = 5.0f + (25.0f * static_cast <float> (rand()) / static_cast <float> (RAND_MAX));
-        p._force = glm::vec3(0.0f, 0.0f, 0.0f);
-        float seed = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-        p._seed = seed;
-        p._center = glm::vec3( 200 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-                               25 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX),
-                               200 * static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
-        p._luminosity = 1.0f;
-        p._origin = p._center;
-        p._age = p._duration;
-        p._light_color = glm::vec3(255.0f, 255.0f, 0.0f);
-        p._light_radius = 100.0f;
-        particles.push_back(p);
-
-        {
-            PointLight light;
-            light.set_position(glm::vec3(p._center));
-            light.set_color(glm::vec3(255.0f, 255.0f, 0.0f));
-            light.set_radius(3.0f);
-            scene->add_object(std::move(light));
-        }
-    }
-    
-    Texture particles_texture(window_size, ImageFormat::RGBA16_FLOAT);
-    Framebuffer particles_framebuffer(nullptr, std::array{&particles_texture});
-    
-    auto particles_render_program = Program::from_files("particle.frag", "particle.vert");
-    auto particles_compute_program = Program::from_file("particle.comp");
-    auto particles_material_raw = OM3D::Material::empty_material(particles_render_program, {});
-    auto particles_material = std::make_shared<Material>(particles_material_raw);
-    
+    size_t nb_particles = 200;
     std::shared_ptr<ParticleSystem> particle_system =
-        std::make_shared<ParticleSystem>(ParticleSystem(
-            particles_compute_program, particles_material, particles, scene->point_lights()));*/
-
-    size_t nb_particles = 300;
-    std::shared_ptr<ParticleSystem> particle_system =
-        std::make_shared<ParticleSystem>(ParticleSystem(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(200, 25, 200), nb_particles, window_size));
+        std::make_shared<ParticleSystem>(ParticleSystem(glm::vec3(50.0f, 0.0f, 150.0f), glm::vec3(300, 40, 300), nb_particles, window_size));
 
     for (PointLight &l : particle_system->lights)
     {
@@ -346,7 +304,8 @@ int main(int, char**) {
         mapping[0].camera.view = scene_view.camera().view_matrix();
         mapping[0].camera.proj = projection;
         mapping[0].point_light_count = 0;
-        mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
+        // mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
+        mapping[0].sun_color = glm::vec3(0.3f, 0.3f, 0.3f);
         mapping[0].sun_dir = glm::normalize(scene->sun_direction());
         mapping[0].numParticles = nb_particles;
     }
@@ -379,27 +338,16 @@ int main(int, char**) {
             // use gbuffer shader
             scene_view.render();
             
-            scene_view.render_particles(delta_time, particle_system);
+            scene_view.render_particles(delta_time, particle_system, gui_lit);
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
-
+        
         if(gui_albedo)
         {
-            renderbuffer.bind();
             debug_color.bind();
             debug_program->set_uniform("depth", (unsigned int)false);
             scene_view.render_triangle();
-
-            tonemap_program->bind();
-            glit.bind(0);
-            glit.bind(1);
-            color.bind_as_image(1, AccessType::WriteOnly);
-            
-            glDispatchCompute(align_up_to(window_size.x, 8) / 8, align_up_to(window_size.y, 8) / 8, 1);
-
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            tonemap_framebuffer.blit();
         }
         else if(gui_normal)
         {
@@ -414,9 +362,9 @@ int main(int, char**) {
             scene_view.render_triangle();
         }
         else {
-            glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // To have black background when getting bright colors only
+            // glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // To have black background when getting bright colors only
             renderbuffer.bind();
-            glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // To have black background when getting bright colors only
+            // glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // To have black background when getting bright colors only
             sun_material->bind();
             scene_view.render_triangle();
 
@@ -440,7 +388,7 @@ int main(int, char**) {
             glDispatchCompute(align_up_to(window_size.x, 8) / 8,
                               align_up_to(window_size.y, 8) / 8, 1);
             
-            uint blur_pass_bonus = 1;
+            uint blur_pass_bonus = 5;
             for (uint i = 0; i < blur_pass_bonus; i++)
             {
                 bloom_program->set_uniform(HASH("x_blur"), (unsigned int)true);
@@ -504,6 +452,9 @@ int main(int, char**) {
                 gui_albedo = false;
                 gui_normal = false;
                 //boolean = !boolean;
+            }
+            if(ImGui::Checkbox("all lit", &gui_lit))
+            {
             }
         }
         imgui.finish();

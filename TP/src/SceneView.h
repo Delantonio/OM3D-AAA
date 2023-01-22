@@ -20,7 +20,7 @@ class SceneView {
         // void render_triangle(std::shared_ptr<SceneObject> light_sphere) const;
         void render_lights(SceneObject &light_sphere) const;
         
-        void render_particles(const float &delta_time, std::shared_ptr<ParticleSystem> particle_system) const;
+        void render_particles(const float &delta_time, std::shared_ptr<ParticleSystem> particle_system, const bool &gui_lit) const;
 
     private:
         const Scene* _scene = nullptr;

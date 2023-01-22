@@ -49,7 +49,7 @@ void main()
         if(NoL <= 0.0 || att <= 0.0) {
             continue;
         }
-        acc += light.color * (NoL * att);
+        acc += light.color * light.luminosity * (NoL * att);
     }
 
     float brightness = dot(acc, vec3(0.2126, 0.7152, 0.0722));

@@ -16,6 +16,7 @@ layout(binding = 2) buffer PointLights {
     PointLight pointLights[];
 };
 
+uniform uint all_lit = 0;
 uniform float dt = 0.01f;
 
 float rand(vec2 co)
@@ -27,6 +28,8 @@ void main()
 {
     uint index = gl_GlobalInvocationID.x;
     particles[index].age -= dt;
+    
+    // Respawn particle
     if (particles[index].age < 0.0) {
         particles[index].age = particles[index].duration;
         particles[index].seed = rand(particles[index].center.xy + vec2(0.0, 1.0));
@@ -35,15 +38,31 @@ void main()
     }
     
     // particles[index].color.r = (sin(particles[index].age * 5.0) / 2.0) + 0.5;
-    particles[index].luminosity =(sin(particles[index].age * 5.0) / 2.0) + 0.5;
+    if (all_lit == 0)
+    {
+        if (sin(particles[index].age * 2.0 * 3.14 * 0.15) < 0.0 || sin(particles[index].age * 2.0 * 3.14 * 0.1) < 0.0)
+        {
+            pointLights[index].luminosity = 0.0;
+        }
+        else
+        {
+            pointLights[index].luminosity = (sin(particles[index].age * 2.0 * 3.14 * 0.3) / 2.0) + 0.5;
+        }
+        //pointLights[index].luminosity = particles[index].age > 0.5 ? 0.0 : (sin(particles[index].age * 5.0) / 2.0) + 0.5;
+        particles[index].color.a = pointLights[index].luminosity;
+    }
+    else
+    {
+        // pointLights[index].luminosity = sin(particles[index].age * 2.0 * 3.14 * 0.3) / 2.0 + 0.5;
+        pointLights[index].luminosity = 1.0;
+        particles[index].color.a = 1.0;
+    }
 
     vec3 direction = vec3(sin(particles[index].age * 2.0 * particles[index].seed) * 10.0, 5.0, cos(particles[index].center.z * 2.0 * particles[index].seed) * 10.0);
-    
     particles[index].center += direction * dt * ( 0.5 + particles[index].seed ) * 0.5f;
 
     // get vector from particle to camera
     vec3 toCamera = normalize((inverse(frame.camera.view) * vec4(0.0, 0.0, 0.0, 1.0)).xyz - particles[index].center);
-
     // Set light on particle
-    pointLights[index].position = particles[index].center + toCamera * 0.1f;
+    pointLights[index].position = particles[index].center + toCamera * 0.2;
 }

@@ -23,7 +23,8 @@ layout(binding = 1) buffer ParticleSSBO {
     Particle particles[];
 };
 
-out vec3 color;
+out vec4 color;
+out vec3 normal;
 out vec2 uv;
 
 void main() {
@@ -34,8 +35,11 @@ void main() {
     vec4 modelSpace = view * vec4(particles[gl_InstanceID].center, 1.0);
 
     vec2 v = modelSpace.xy + in_pos.xy;
-    color = particles[gl_InstanceID].color.rgb;
+    color = particles[gl_InstanceID].color;
     uv = in_uv;
+
+    vec3 toCamera = normalize((inverse(view) * vec4(0.0, 0.0, 0.0, 1.0)).xyz - particles[gl_InstanceID].center);
+    normal = toCamera;
 
     gl_Position = proj * vec4(v, modelSpace.z, 1.0);
 }

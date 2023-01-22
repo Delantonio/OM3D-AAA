@@ -28,26 +28,27 @@ void Scene::render(const Camera& camera) const {
         auto mapping = buffer.map(AccessType::WriteOnly);
         mapping[0].camera.view_proj = camera.view_proj_matrix();
         mapping[0].point_light_count = u32(_point_lights.size());
-        mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
+        // mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
+        mapping[0].sun_color = glm::vec3(0.3f, 0.3f, 0.3f);
         mapping[0].sun_dir = glm::normalize(_sun_direction);
     }
     buffer.bind(BufferUsage::Uniform, 0);
 
     // Fill and bind lights buffer
-    TypedBuffer<shader::PointLight> light_buffer(nullptr, std::max(_point_lights.size(), size_t(1)));
-    {
-        auto mapping = light_buffer.map(AccessType::WriteOnly);
-        for(size_t i = 0; i != _point_lights.size(); ++i) {
-            const auto& light = _point_lights[i];
-            mapping[i] = {
-                light.position(),
-                light.radius(),
-                light.color(),
-                0.0f
-            };
-        }
-    }
-    light_buffer.bind(BufferUsage::Storage, 1);
+    // TypedBuffer<shader::PointLight> light_buffer(nullptr, std::max(_point_lights.size(), size_t(1)));
+    // {
+    //     auto mapping = light_buffer.map(AccessType::WriteOnly);
+    //     for(size_t i = 0; i != _point_lights.size(); ++i) {
+    //         const auto& light = _point_lights[i];
+    //         mapping[i] = {
+    //             light.position(),
+    //             light.radius(),
+    //             light.color(),
+    //             0.0f
+    //         };
+    //     }
+    // }
+    // light_buffer.bind(BufferUsage::Storage, 1);
 
     Frustum frustum = camera.build_frustum();
 
@@ -70,7 +71,8 @@ void Scene::render(const Camera& camera) const {
 void Scene::render_triangle(const Camera &camera) const
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(0.5f, 0.7f, 0.8f, 0.0f);
+    // glClearColor(0.5f, 0.7f, 0.8f, 0.0f);
+    glClearColor(0.2f, 0.3f, 0.4f, 0.0f);
 
     // Fill and bind frame data buffer
     TypedBuffer<shader::FrameData> buffer(nullptr, 1);
@@ -78,27 +80,12 @@ void Scene::render_triangle(const Camera &camera) const
         auto mapping = buffer.map(AccessType::WriteOnly);
         mapping[0].camera.view_proj = camera.view_proj_matrix();
         mapping[0].point_light_count = u32(_point_lights.size());
-        mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
+        mapping[0].sun_color = glm::vec3(0.1f, 0.1f, 0.1f);
+        // mapping[0].sun_color = glm::vec3(1.0f, 1.0f, 1.0f);
         mapping[0].sun_dir = glm::normalize(_sun_direction);
     }
     buffer.bind(BufferUsage::Uniform, 0);
 
-    // Fill and bind lights buffer
-    TypedBuffer<shader::PointLight> light_buffer(nullptr, std::max(_point_lights.size(), size_t(1)));
-    {
-        auto mapping = light_buffer.map(AccessType::WriteOnly);
-        for(size_t i = 0; i != _point_lights.size(); ++i) {
-            const auto& light = _point_lights[i];
-            mapping[i] = {
-                light.position(),
-                light.radius(),
-                light.color(),
-                0.0f
-            };
-        }
-    }
-    light_buffer.bind(BufferUsage::Storage, 1);
-    
     // Render screen triangle
     glDrawArrays(GL_TRIANGLES, 0, 3);
     
@@ -108,7 +95,7 @@ void Scene::render_lights(const Camera &camera, SceneObject &light_sphere) const
 {
     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // glClearColor(0.5f, 0.7f, 0.8f, 0.0f);
-
+    //
     // Fill and bind frame data buffer
     TypedBuffer<shader::FrameData> buffer(nullptr, 1);
     {
@@ -120,22 +107,6 @@ void Scene::render_lights(const Camera &camera, SceneObject &light_sphere) const
     }
     buffer.bind(BufferUsage::Uniform, 0);
     
-    // Fill and bind lights buffer
-    TypedBuffer<shader::PointLight> light_buffer(nullptr, std::max(_point_lights.size(), size_t(1)));
-    {
-        auto mapping = light_buffer.map(AccessType::WriteOnly);
-        for(size_t i = 0; i != _point_lights.size(); ++i) {
-            const auto& light = _point_lights[i];
-            mapping[i] = {
-                light.position(),
-                light.radius(),
-                light.color(),
-                0.0f
-            };
-        }
-    }
-    light_buffer.bind(BufferUsage::Storage, 1);
-
     glDrawArrays(GL_TRIANGLES, 0, 3);
     
     // TODO: Light sphere culling
@@ -166,8 +137,9 @@ void Scene::render_lights(const Camera &camera, SceneObject &light_sphere) const
     //}
 }
 
-
-void Scene::render_particles(const Camera &camera, std::shared_ptr<ParticleSystem> particle_system, const float &dt) const
+void Scene::render_particles(const Camera &camera,
+                             std::shared_ptr<ParticleSystem> particle_system,
+                             const float &dt, const bool &gui_lit) const
 {
     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // glClearColor(0.5f, 0.7f, 0.8f, 0.0f);
@@ -188,10 +160,8 @@ void Scene::render_particles(const Camera &camera, std::shared_ptr<ParticleSyste
     }
     buffer.bind(BufferUsage::Uniform, 0);
     
-    Frustum frustum = camera.build_frustum();
-    
     // Update particles
-    particle_system->update(dt);
+    particle_system->update(dt, gui_lit);
     
     particle_system->_render_material->bind();
     buffer.bind(BufferUsage::Uniform, 0);
