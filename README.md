@@ -4,9 +4,10 @@
 This repository contains the code for the TP of the course OM3D.
 
 ### TP
-main branch is currently the TP1.
-TP2 branch is the TP2.
-projet branch is the Project.
+main branch is currently the TP1. (Frustum culling + Instancing)
+TP2 branch is the TP2. (Deferred Shading)
+projet branch is the Project. (Deferred Shading + GPU Particles (instanced) + PBR Bloom)
+
 
 # OM3D
 EPITA course for 5th year students
