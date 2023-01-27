@@ -1,3 +1,13 @@
+# OM3D repository
+
+### Description
+This repository contains the code for the TP of the course OM3D.
+
+### TP
+main branch is currently the TP1.
+TP2 branch is the TP2.
+projet branch is the Project.
+
 # OM3D
 EPITA course for 5th year students
 
